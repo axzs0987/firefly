@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2e5c4e3b-8dae-423b-b670-90900ab00514" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/notebook2sequence.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebook2sequence.py" afterDir="false" />
-    </list>
+    <list default="true" id="2e5c4e3b-8dae-423b-b670-90900ab00514" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,8 +73,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="175">
-              <caret line="958" column="23" lean-forward="true" selection-start-line="958" selection-start-column="23" selection-end-line="958" selection-end-column="23" />
+            <state relative-caret-position="-193">
+              <caret line="952" column="8" selection-start-line="952" selection-start-column="4" selection-end-line="952" selection-end-column="8" />
               <folding>
                 <element signature="e#0#30#0" expanded="true" />
                 <marker date="1599830261142" expanded="true" signature="1173:2213" ph="..." />
@@ -220,7 +218,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-1832" y="-256" width="1920" height="889" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.08267509" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -330,8 +327,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="175">
-          <caret line="958" column="23" lean-forward="true" selection-start-line="958" selection-start-column="23" selection-end-line="958" selection-end-column="23" />
+        <state relative-caret-position="-193">
+          <caret line="952" column="8" selection-start-line="952" selection-start-column="4" selection-end-line="952" selection-end-column="8" />
           <folding>
             <element signature="e#0#30#0" expanded="true" />
             <marker date="1599830261142" expanded="true" signature="1173:2213" ph="..." />
