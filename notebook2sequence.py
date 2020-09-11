@@ -983,7 +983,7 @@ def main(argv):
         elif opt in ("-ni", "--nid"):
             notebook_id = int(arg)
         elif opt in ("-nt", "--ntitle"):
-            ntoebook_title = int(arg)
+            notebook_title = int(arg)
         elif opt in ("-s", "--save"):
             if arg == 'True':
                 is_save = True
