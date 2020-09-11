@@ -1,8 +1,10 @@
 from utils import get_code_txt
+from utils import add_sequence_from_walk_logs
+from utils import get_batch_notebook_info
 import ast
 import astunparse
 import configparser
-import os
+import sys, getopt
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read('config.ini')
@@ -18,6 +20,8 @@ condition_switch = {
 }
 
 walk_logs = {
+    "notebook_id": -1,
+    "notebook_title": "",
     "is_img": False, #是否是处理图像的notebook
 
     "import_lis": set(), #一共引用了那些包
@@ -38,7 +42,7 @@ walk_logs = {
     "estiminator_values": {}, #估计器的变量
 }
 
-def reflush_walk_logs_and_condition_switch():
+def reflush_walk_logs_and_condition_switch(notebook_id, notebook_title):
     global condition_switch, walk_logs
     condition_switch = {
         "is_assign": False,
@@ -51,6 +55,8 @@ def reflush_walk_logs_and_condition_switch():
     }
 
     walk_logs = {
+        "notebook_id": notebook_id,
+        "notebook_title": notebook_title,
         "is_img": False,  # 是否是处理图像的notebook
 
         "import_lis": set(),  # 一共引用了那些包
@@ -884,11 +890,17 @@ class CodeVisitor(ast.NodeVisitor):
         walking(node)
         is_While = 0
 
-def single_running(path):
+def single_running(notebook_id, notebook_title, notebook_path, is_save=False, save_walk_logs_path=""):
+    """
+    :param notebook_id: 数据库里notebook的id
+    :param notebook_title: 数据库里notebook的title，根路径+title = 文件路径
+    :param notebook_path: 存储notebook的根路径
+    :return: 返回当前notebook的walk_logs
+    """
     global condition_switch, walk_logs
-    reflush_walk_logs_and_condition_switch()
+    reflush_walk_logs_and_condition_switch(notebook_id, notebook_title)
     try:
-        code_txt = get_code_txt(path)
+        code_txt = get_code_txt(notebook_path + '/' + notebook_title)
     except Exception as e:
         print('str(Exception):\t', str(e))
         print('read error')
@@ -911,18 +923,76 @@ def single_running(path):
     print("seq:", seq)
     print("data_flow:", walk_logs["data_values"])
 
-    # print(astunparse.dump(r_node))
+    if is_save == True:
+        try:
+            add_sequence_from_walk_logs(walk_logs, save_walk_logs_path)
+        except:
+            print("add database fail")
+    return walk_logs
 
-def batch_running(path):
-    path_list = os.listdir(path)
-    path_list.sort()
+def batch_running(notebook_path, save_walk_logs_path):
+    """
+    :param notebook_path: 存储notebook的根路径
+    :param save_walk_logs_path: 用来存储walk_logs
+    :return: 无
+    """
+    notebook_info_list = get_batch_notebook_info()
+    for notebook_info in notebook_info_list:
+        notebook_id = notebook_info[0]
+        notebook_title = notebook_info[1]
+        try:
+            this_walk_logs = single_running(notebook_id, notebook_title, notebook_path)
+        except:
+            print("single_running fail")
 
-    for i in path_list:
-        if(i[-6:] == '.ipynb'):
-            print('path:', i)
-            single_running(path+'/' + i)
+        try:
+            add_sequence_from_walk_logs(this_walk_logs, save_walk_logs_path)
+        except:
+            print("add database fail")
 
-if __name__ == '__main__':
-    # single_running('test_data/basics-logistic-regression-and-random-forest.ipynb')
-    batch_running('test_data')
-    # print("walk_logs:", walk_logs)
+def main(argv):
+    opts, args = getopt.getopt(argv, "hrt:np:sp:ni:nt:s", ["rtype=", "npath=","spath=","nid=","ntitle=", "save="])
+    running_type = 'batch'
+    notebook_path = '../'
+    save_walk_logs_path = '../walklogs'
+    notebook_id = 0
+    notebook_title = ""
+    is_save = False
+    for opt, arg in opts:
+        if opt == '-h':
+            print("if you want running batches:")
+            print("notebook2sequence.py -rt batch -np <npath> -sp <spath>")
+            print("else if you want running single:")
+            print("notebook2sequence.py -rt single -np <npath> -sp <spath> -ni <nid> -nt <ntitle> -s <save>")
+            print('-rt <type>: running_type, single or batch')
+            print('-np <npath>: notebook_path')
+            print('-sp <spath>: single or batch')
+            print('-ni <nid>: notebook_id')
+            print('-nt <ntitle>: notebook_title')
+            print('-s <save>: is_save')
+            sys.exit()
+        elif opt in ("-rt", "--rtype"):
+            running_type = arg
+            if running_type != 'batch' and running_type != 'single':
+                print("rt must be batch or single")
+                sys.exit()
+        elif opt in ("-np", "--npath"):
+            notebook_path = arg
+        elif opt in ("-sp", "--spath"):
+            save_walk_logs_path = arg
+        elif opt in ("-ni", "--nid"):
+            notebook_id = int(arg)
+        elif opt in ("-nt", "--ntitle"):
+            ntoebook_title = int(arg)
+        elif opt in ("-s", "--save"):
+            if arg == 'True':
+                is_save = True
+            elif arg == 'False':
+                is_save = False
+
+    if running_type == 'batch':
+        batch_running(notebook_path, save_walk_logs_path)
+    elif running_type == 'single':
+        single_running(notebook_id, notebook_title, notebook_path, is_save, save_walk_logs_path)
+
+    return

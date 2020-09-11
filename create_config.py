@@ -29,7 +29,15 @@ config["models"] = {
         'xgb': 12,
         'ada_boost': 13,
         'AdaBoost': 13,
-    }
+    },
+    'model_task': [1,1,1,1,2,2,1,1,3,2,2,2,1]
+}
+
+config["database"] = {
+    "host": '10.77.70.123',
+    "user": 'root',
+    "passwd": 'mysqlinfo500',
+    "dataset": 'kagglenotebook'
 }
 
 config["operators"] = {
