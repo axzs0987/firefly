@@ -953,7 +953,7 @@ def batch_running(notebook_path, save_walk_logs_path):
 def main(argv):
     opts, args = getopt.getopt(argv, "hrt:np:sp:ni:nt:s", ["rtype=", "npath=","spath=","nid=","ntitle=", "save="])
     running_type = 'batch'
-    notebook_path = '../'
+    notebook_path = '../spider/notebook'
     save_walk_logs_path = '../walklogs'
     notebook_id = 0
     notebook_title = ""
