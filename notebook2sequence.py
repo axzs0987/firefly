@@ -40,6 +40,8 @@ walk_logs = {
 
     "local_values": [], #所有的变量
     "estiminator_values": {}, #估计器的变量
+    "estiminator_args": {}, #估计器的参数
+    "estiminator_keywords": {}, #估计器的参数
 }
 
 def reflush_walk_logs_and_condition_switch(notebook_id, notebook_title):
@@ -57,24 +59,28 @@ def reflush_walk_logs_and_condition_switch(notebook_id, notebook_title):
     walk_logs = {
         "notebook_id": notebook_id,
         "notebook_title": notebook_title,
-        "is_img": False,  # 是否是处理图像的notebook
+        "notebook_id": -1,
+        "notebook_title": "",
+        "is_img": False, #是否是处理图像的notebook
 
-        "import_lis": set(),  # 一共引用了那些包
-        "pandas_alias": "",  # pandas在代码中的简写
-        "funcdef_sequence": {},  # 自定义函数的子序列
-        "funcdef_values": {},  # 自定义函数被赋值的全局变量
-        "operator_sequence": [],  # notebook的序列是啥（我们想要的结果）
+        "import_lis": set(), #一共引用了那些包
+        "pandas_alias": "", #pandas在代码中的简写
+        "funcdef_sequence" : {}, #自定义函数的子序列
+        "funcdef_values" : {}, #自定义函数被赋值的全局变量
+        "operator_sequence": [], #notebook的序列是啥（我们想要的结果）
 
-        "data_values": [],  # 数据变量流
-        "data_types": [],  # 数据变量流的类型
-        "models": set(),  # notebook里边用到了哪些模型
+        "data_values": [], # 数据变量流
+        "data_types": [], # 数据变量流的类型
+        "models": set(), #notebook里边用到了哪些模型
 
-        "read_function": "",  # 如果是用自定义函数读入文件，这个函数的名字
-        "function_read_file_values": [],  # 自定义读入文件函数里边，读入文件表示的变量
-        "function_read_file_types": [],  # 自定义读入文件函数里边，读入文件表示的变量类型
+        "read_function": "", # 如果是用自定义函数读入文件，这个函数的名字
+        "function_read_file_values": [], # 自定义读入文件函数里边，读入文件表示的变量
+        "function_read_file_types": [],# 自定义读入文件函数里边，读入文件表示的变量类型
 
-        "local_values": [],  # 所有的变量
-        "estiminator_values": {},  # 估计器的变量
+        "local_values": [], #所有的变量
+        "estiminator_values": {}, #估计器的变量
+        "estiminator_args": {}, #估计器的参数
+        "estiminator_keywords": {}, #估计器的参数
     }
 
 def check_img_and_model(st):
@@ -270,6 +276,8 @@ def walking(node):
                 is_estiminator = True
         if is_estiminator == True:
             walk_logs["estiminator_values"][assign_value_list[0]] = assign_target_list[0]
+            walk_logs["estiminator_args"][assign_value_list[0]]= assign_value_list[1]
+            walk_logs["estiminator_keywords"][assign_value_list[0]] = assign_value_list[2]
 
         #############增加local数据##############################
         for assign_target in assign_target_list:
@@ -386,6 +394,7 @@ def walking(node):
                     if (j[0] == walking(arg_node)):
                         args_name.append((astunparse.unparse(arg_node), j[1]))
                         is_in = True
+                        break
                 if is_in == False:
                     args_name.append((astunparse.unparse(arg_node), 'unknown variable'))
             if type(one_arg_result).__name__ == 'str':
@@ -419,7 +428,7 @@ def walking(node):
             this_funcdef_sequence = walk_logs["funcdef_sequence"][func_name]
             for operator_node in this_funcdef_sequence:
                 for num in range(0, len(walk_logs["data_values"])):
-                    if walk_logs["data_values"][num] == args_name[operator_node["parameter_id"]][0] or walk_logs["data_values"][num] == keywords_name[operator_node["parameter_name"]][0]: # 如果自定义函数内部序列的数据参数对象，在这里对应数据是数据流里，则把增额操作加入到主序列里边
+                    if walk_logs["data_values"][num] == args_name[operator_node["data_param_id"]][0] or walk_logs["data_values"][num] == keywords_name[operator_node["data_param_name"]][0]: # 如果自定义函数内部序列的数据参数对象，在这里对应数据是数据流里，则把增额操作加入到主序列里边
                         data_object = walk_logs["data_types"][num]
                         functiondef_sequence_node_to_operator_sequence_node(operator_node, data_object)
 
@@ -442,8 +451,9 @@ def walking(node):
                     physic_operation = eval(CONFIG.get('operators','operations'))[node.func.attr]["physic_operations"][0]
                     if node.func.attr == 'fillna':
                         physic_operation = "filling_by_stratage"
-                        if (args_name[0][1] == 'Str' or args_name[0][0][1] == 'Num'):  # 如果fillna的第一个参数的类型是常数
-                            physic_operation = "filling_constant"
+                        if len(args_name) != 0:
+                            if (args_name[0][1] == 'Str' or args_name[0][1] == 'Num'): # 如果fillna的第一个参数的类型是常数
+                                physic_operation = "filling_constant"
 
                     dataset_name = walking(node.func.value)
                     for i in range(0, len(condition_switch["now_func_args"])):
@@ -468,11 +478,15 @@ def walking(node):
                     attr_body = walking(node.func.value)
                     is_estiminator = False
                     estiminator_name = ""
+                    estiminator_args = []
+                    estiminator_keywords = {}
                     for i in walk_logs["estiminator_values"]:
                         if walk_logs["estiminator_values"][i] == attr_body:
                             is_estiminator = True
                             estiminator_name = i
-                    if is_estiminator == True and node.func.attr == 'fit_transform' or node.func.attr == 'transform':
+                            estiminator_args = walk_logs["estiminator_args"][i]
+                            estiminator_keywords = walk_logs["estiminator_args"][i]
+                    if is_estiminator == True and (node.func.attr == 'fit_transform' or node.func.attr == 'transform'):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
                         else:
@@ -480,8 +494,8 @@ def walking(node):
                         physic_operation = eval(CONFIG.get('operators', 'operations'))[estiminator_name]["physic_operations"][0]
                         for i in range(0, len(condition_switch["now_func_args"])):
                             if (dataset_name == condition_switch["now_func_args"][i]):
-                                create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name,
-                                                                  keywords_name, data_param_id=i,
+                                create_new_funcdef_sequence_node(node.func.attr, physic_operation, estiminator_args,
+                                                                 estiminator_keywords, data_param_id=i,
                                                                   data_param_name=dataset_name)
                     else:
                         res = walking(node.func)
@@ -493,11 +507,14 @@ def walking(node):
                         if (type(arg_node).__name__ != "Name"):
                             args_name1.append((astunparse.unparse(arg_node), type(arg_node).__name__))
                         else:
+                            is_in = False
                             for j in walk_logs["local_values"]:
                                 if (j[0] == walking(arg_node)):
                                     args_name1.append((astunparse.unparse(arg_node), j[1]))
-                                else:
-                                    args_name1.append((astunparse.unparse(arg_node), 'unknown variable'))
+                                    is_in = True
+                                    break
+                            if is_in == False:
+                                args_name1.append((astunparse.unparse(arg_node), 'unknown variable'))
                         if type(one_arg_result).__name__ == 'str':
                             return_list.append(one_arg_result)
                         elif type(one_arg_result).__name__ == 'List':
@@ -530,12 +547,12 @@ def walking(node):
                         if eval(CONFIG.get('operators', 'operations'))[i]["call_type"] == 3 and func_name == i:
                             is_estiminator = True
                             estiminator_name = func_name
-                    if is_estiminator == True and node.func.attr == 'fit_transform' or node.func.attr == 'transform':
+                    if is_estiminator == True and (node.func.attr == 'fit_transform' or node.func.attr == 'transform'):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
                         else:
-                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[func_name]['params'][0]]
-                        physic_operation = eval(CONFIG.get('operators', "operations"))[func_name]["physic_operations"][0]
+                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[estiminator_name]['params'][0]]
+                        physic_operation = eval(CONFIG.get('operators', "operations"))[estiminator_name]["physic_operations"][0]
                         for i in range(0, len(condition_switch["now_func_args"])):
                             if (dataset_name == condition_switch["now_func_args"][i]):
                                 create_new_funcdef_sequence_node(estiminator_name, physic_operation, args_name,
@@ -568,7 +585,7 @@ def walking(node):
 
                 # *******判断type3*************
                 elif check_operators(func_body, 3):
-                    return func_body
+                    return [func_body,args_name,keywords_name]
                 else:
                     res = walking(node.func)
 
@@ -582,8 +599,9 @@ def walking(node):
                     physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
                     if node.func.attr == 'fillna':
                         physic_operation = "filling_by_stratage"
-                        if (args_name[0][1] == 'Str' or args_name[0][0][1] == 'Num'): # 如果fillna的第一个参数的类型是常数
-                            physic_operation = "filling_constant"
+                        if len(args_name) != 0:
+                            if (args_name[0][1] == 'Str' or args_name[0][1] == 'Num'): # 如果fillna的第一个参数的类型是常数
+                                physic_operation = "filling_constant"
 
                     dataset_name = walking(node.func.value)
                     return_list.insert(0, dataset_name)
@@ -622,10 +640,14 @@ def walking(node):
                     attr_body = walking(node.func.value)
                     is_estiminator = False
                     estiminator_name = ""
+                    estiminator_args = []
+                    estiminator_keywords = {}
                     for i in walk_logs["estiminator_values"]:
                         if walk_logs["estiminator_values"][i] == attr_body:
                             is_estiminator = True
                             estiminator_name = i
+                            estiminator_args = walk_logs["estiminator_args"][i]
+                            estiminator_keywords = walk_logs["estiminator_keywords"][i]
                     if is_estiminator == True and (node.func.attr == 'fit_transform' or node.func.attr == 'transform'):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
@@ -641,7 +663,7 @@ def walking(node):
                             walk_logs["data_values"].append(dataset_name)
                             walk_logs["data_types"].append(data_object)
                         physic_operation = eval(CONFIG.get('operators', 'operations'))[estiminator_name]["physic_operations"][0]
-                        create_new_sequence_node(estiminator_name, physic_operation, args_name, keywords_name, data_object)
+                        create_new_sequence_node(estiminator_name, physic_operation, estiminator_args, estiminator_keywords, data_object)
                     else:
                         res = walking(node.func)
                         if(type(node.func) != "Name"):
@@ -658,11 +680,14 @@ def walking(node):
                         if (type(arg_node).__name__ != "Name"):
                             args_name1.append((astunparse.unparse(arg_node), type(arg_node).__name__))
                         else:
+                            is_in = False
                             for j in walk_logs["local_values"]:
                                 if (j[0] == walking(arg_node)):
                                     args_name1.append((astunparse.unparse(arg_node), j[1]))
-                                else:
-                                    args_name1.append((astunparse.unparse(arg_node), 'unknown variable'))
+                                    is_in = True
+                                    break
+                            if is_in == False:
+                                args_name1.append((astunparse.unparse(arg_node), 'unknown variable'))
                         if type(one_arg_result).__name__ == 'str':
                             return_list.append(one_arg_result)
                         elif type(one_arg_result).__name__ == 'List':
@@ -697,11 +722,11 @@ def walking(node):
                         if eval(CONFIG.get('operators', 'operations'))[i]["call_type"] == 3 and func_name == i:
                             is_estiminator = True
                             estiminator_name = func_name
-                    if is_estiminator == True and node.func.attr == 'fit_transform' or node.func.attr == 'transform':
+                    if is_estiminator == True and (node.func.attr == 'fit_transform' or node.func.attr == 'transform'):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
                         else:
-                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[func_name]['params'][0]]
+                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[estiminator_name]['params'][0]]
                         is_in = False
                         for i in range(0, len(walk_logs["data_values"])):
                             if (dataset_name == walk_logs["data_values"][i]):
@@ -711,7 +736,7 @@ def walking(node):
                             data_object = "unknown"
                             walk_logs["data_values"].append(dataset_name)
                             walk_logs["data_types"].append(data_object)
-                        physic_operation = eval(CONFIG.get('operators', "operations"))[func_name]["physic_operations"][0]
+                        physic_operation = eval(CONFIG.get('operators', "operations"))[estiminator_name]["physic_operations"][0]
                         create_new_sequence_node(estiminator_name, physic_operation, args_name1, keywords_name1, data_object)
                     else:
                         res = walking(node.func)
@@ -752,7 +777,7 @@ def walking(node):
 
                 # *******判断type3*************
                 elif check_operators(func_body, 3):
-                    return func_body
+                    return [func_body, args_name, keywords_name]
 
 
         return return_list
@@ -899,20 +924,29 @@ def single_running(notebook_id, notebook_title, notebook_path, is_save=False, sa
     """
     global condition_switch, walk_logs
     reflush_walk_logs_and_condition_switch(notebook_id, notebook_title)
+    walk_logs["notebook_id"] = int(notebook_id)
+    walk_logs["notebook_title"] = notebook_title
     try:
-        code_txt = get_code_txt(notebook_path + '/' + notebook_title)
+        notebook_title_list = notebook_title.split(' ')
+        new_title = ''
+        for i in range(0, len(notebook_title_list)):
+            new_title += notebook_title_list[i]
+            if i != len(notebook_title_list)-1:
+                new_title += '_'
+        
+        code_txt = get_code_txt(notebook_path + '/' + new_title.lower() + '.ipynb')
     except Exception as e:
-        print('str(Exception):\t', str(e))
-        print('read error')
-        return
-
+        # print('str(Exception):\t', str(e))
+        # print("\033[0;31;40m\tread error\033[0m")
+        return "ERROR"
     visitor = CodeVisitor()
     try:
         r_node = ast.parse(code_txt)
     except Exception as e:
-        print('str(Exception):\t', str(e))
-        print('parse error')
-        return
+        # print('str(Exception):\t', str(e))
+        # print("\033[0;31;40m\tparse error\033[0m")
+        return "ERROR"
+
     visitor.visit(r_node)
 
     count = 0
@@ -921,13 +955,12 @@ def single_running(notebook_id, notebook_title, notebook_path, is_save=False, sa
         count+=1
         seq.append((i["operator_name"], i['data_object']))
     print("seq:", seq)
-    print("data_flow:", walk_logs["data_values"])
 
     if is_save == True:
         try:
             add_sequence_from_walk_logs(walk_logs, save_walk_logs_path)
         except:
-            print("add database fail")
+            print("\033[0;31;40m\tadd database fail\033[0m")
     return walk_logs
 
 def batch_running(notebook_path, save_walk_logs_path):
@@ -940,59 +973,69 @@ def batch_running(notebook_path, save_walk_logs_path):
     for notebook_info in notebook_info_list:
         notebook_id = notebook_info[0]
         notebook_title = notebook_info[1]
+        print("\033[0;34;40m\tid:" + str(notebook_id) + '\ttitle:' + notebook_title + "\033[0m")
         try:
             this_walk_logs = single_running(notebook_id, notebook_title, notebook_path)
         except:
-            print("single_running fail")
-
+            print("\033[0;31;40m\tsingle running fail\033[0m")
+        if this_walk_logs == 'ERROR':
+            continue
         try:
-            add_sequence_from_walk_logs(this_walk_logs, save_walk_logs_path)
+            result = add_sequence_from_walk_logs(this_walk_logs, save_walk_logs_path)
+            if result == "ERROR":
+                print(("\033[0;31;40m\tadd database fail\033[0m"))
         except:
-            print("add database fail")
+            print("\033[0;31;40m\tadd database fail\033[0m")
+
 
 def main(argv):
-    opts, args = getopt.getopt(argv, "hrt:np:sp:ni:nt:s", ["rtype=", "npath=","spath=","nid=","ntitle=", "save="])
+    opts, args = getopt.getopt(argv, "hr:n:w:i:t:s", ["rtype=", "npath=","wpath=","nid=","ntitle=", "save="])
     running_type = 'batch'
-    notebook_path = '../spider/notebook'
+    notebook_path = '../notebook'
     save_walk_logs_path = '../walklogs'
     notebook_id = 0
     notebook_title = ""
     is_save = False
     for opt, arg in opts:
+        print(opt, arg)
         if opt == '-h':
             print("if you want running batches:")
-            print("notebook2sequence.py -rt batch -np <npath> -sp <spath>")
+            print("notebook2sequence.py -r batch -n <npath> -w <wpath>")
             print("else if you want running single:")
-            print("notebook2sequence.py -rt single -np <npath> -sp <spath> -ni <nid> -nt <ntitle> -s <save>")
-            print('-rt <type>: running_type, single or batch')
-            print('-np <npath>: notebook_path')
-            print('-sp <spath>: single or batch')
-            print('-ni <nid>: notebook_id')
-            print('-nt <ntitle>: notebook_title')
+            print("notebook2sequence.py -r single -n <npath> -w <wpath> -i <nid> -t <ntitle> -s <save>")
+            print('-r <type>: running_type, single or batch')
+            print('-n <npath>: notebook_path')
+            print('-w <wpath>: save_walk_logs_path')
+            print('-i <nid>: notebook_id')
+            print('-t <ntitle>: notebook_title')
             print('-s <save>: is_save')
             sys.exit()
-        elif opt in ("-rt", "--rtype"):
+        elif opt in ("-r", "--rtype"):
             running_type = arg
             if running_type != 'batch' and running_type != 'single':
-                print("rt must be batch or single")
+                print("r must be batch or single")
                 sys.exit()
-        elif opt in ("-np", "--npath"):
+        elif opt in ("-n", "--npath"):
             notebook_path = arg
-        elif opt in ("-sp", "--spath"):
+        elif opt in ("-w", "--wpath"):
             save_walk_logs_path = arg
-        elif opt in ("-ni", "--nid"):
+        elif opt in ("-i", "--nid"):
             notebook_id = int(arg)
-        elif opt in ("-nt", "--ntitle"):
-            notebook_title = int(arg)
+        elif opt in ("-t", "--ntitle"):
+            notebook_title = arg
         elif opt in ("-s", "--save"):
             if arg == 'True':
                 is_save = True
             elif arg == 'False':
                 is_save = False
 
+    print(notebook_path)
     if running_type == 'batch':
         batch_running(notebook_path, save_walk_logs_path)
     elif running_type == 'single':
         single_running(notebook_id, notebook_title, notebook_path, is_save, save_walk_logs_path)
 
     return
+    
+if __name__ == "__main__":
+   main(sys.argv[1:])
