@@ -606,7 +606,7 @@ def walking(node):
                     dataset_name = walking(node.func.value)
                     return_list.insert(0, dataset_name)
                     is_in = False
-                    for  i in range(0, len(walk_logs["data_values"])):
+                    for i in range(0, len(walk_logs["data_values"])):
                         if(dataset_name == walk_logs["data_values"][i]):
                             data_object = walk_logs["data_types"][i]
                             is_in = True
@@ -915,7 +915,7 @@ class CodeVisitor(ast.NodeVisitor):
         walking(node)
         is_While = 0
 
-def single_running(notebook_id, notebook_title, notebook_path, is_save=False, save_walk_logs_path=""):
+def single_running(notebook_id, notebook_url, notebook_path, is_save=False, save_walk_logs_path=""):
     """
     :param notebook_id: 数据库里notebook的id
     :param notebook_title: 数据库里notebook的title，根路径+title = 文件路径
@@ -923,6 +923,7 @@ def single_running(notebook_id, notebook_title, notebook_path, is_save=False, sa
     :return: 返回当前notebook的walk_logs
     """
     global condition_switch, walk_logs
+    notebook_title = notebook_url.split('/')[-1]
     reflush_walk_logs_and_condition_switch(notebook_id, notebook_title)
     walk_logs["notebook_id"] = int(notebook_id)
     walk_logs["notebook_title"] = notebook_title
@@ -932,7 +933,7 @@ def single_running(notebook_id, notebook_title, notebook_path, is_save=False, sa
         for i in range(0, len(notebook_title_list)):
             new_title += notebook_title_list[i]
             if i != len(notebook_title_list)-1:
-                new_title += '_'
+                new_title += '-'
         
         code_txt = get_code_txt(notebook_path + '/' + new_title.lower() + '.ipynb')
     except Exception as e:
@@ -973,19 +974,22 @@ def batch_running(notebook_path, save_walk_logs_path):
     for notebook_info in notebook_info_list:
         notebook_id = notebook_info[0]
         notebook_title = notebook_info[1]
+        notebook_url = notebook_info[2]
+
         print("\033[0;34;40m\tid:" + str(notebook_id) + '\ttitle:' + notebook_title + "\033[0m")
         try:
-            this_walk_logs = single_running(notebook_id, notebook_title, notebook_path)
+            this_walk_logs = single_running(notebook_id, notebook_url, notebook_path)
         except:
             print("\033[0;31;40m\tsingle running fail\033[0m")
         if this_walk_logs == 'ERROR':
             continue
-        try:
+        # try:
+        if True:
             result = add_sequence_from_walk_logs(this_walk_logs, save_walk_logs_path)
             if result == "ERROR":
                 print(("\033[0;31;40m\tadd database fail\033[0m"))
-        except:
-            print("\033[0;31;40m\tadd database fail\033[0m")
+        # except:
+        #     print("\033[0;31;40m\tadd database fail\033[0m")
 
 
 def main(argv):

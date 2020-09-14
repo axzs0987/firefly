@@ -9,6 +9,8 @@ import numpy as np
 CONFIG = configparser.ConfigParser()
 CONFIG.read('config.ini')
 
+###################以下是一些基本的工具和数据库操作##########################
+
 def get_code_txt(path):
     cot_txt = ""
     lis = read_ipynb(path)
@@ -173,14 +175,19 @@ def add_operator(notebook_id, rank, data_object, operator, physic_operation, par
 
     return insert_db("operator", column_list, value_list)
 
+###################以下是抽取序列需要用的工具##########################
+
 def add_sequence_from_walk_logs(walk_logs, save_path):
     if walk_logs['is_img'] == True:
+        update_db("notebook", "cant_sequence", '1', "id", '=', str(walk_logs["notebook_id"]))
         print("\033[0;33;40m\timage dataset pass\033[0m")
         return
     if len(walk_logs['operator_sequence'])==0:
+        update_db("notebook", "cant_sequence", '1', "id", '=', str(walk_logs["notebook_id"]))
         print("\033[0;33;40m\tsequence length is 0\033[0m")
         return
     if len(walk_logs['models'])==0:
+        update_db("notebook", "cant_sequence", '1', "id", '=', str(walk_logs["notebook_id"]))
         print("\033[0;33;40m\tmodel number is 0\033[0m")
         return
 
@@ -205,14 +212,26 @@ def add_sequence_from_walk_logs(walk_logs, save_path):
     return "SUCCEED"
 def get_batch_notebook_info():
     cursor, db = create_connection()
-    sql = "SELECT id,title FROM notebook WHERE add_sequence=0"
+    sql = "SELECT id,title,scriptUrl FROM notebook WHERE add_sequence=0 and cant_sequence=0"
     cursor.execute(sql)
     sql_res = cursor.fetchall()
     result = []
     for row in sql_res:
-        notebook_info = (row[0],row[1])
+        notebook_info = (row[0],row[1],row[2])
         result.append(notebook_info)
     return result
+
+###################以下是批量运行##########################
+
+def found_dataset(old_path, notebook_id, root_path, origin_code):
+    filename = old_path.split('/')[-1]
+    print('filename', filename)
+    if '.' not in filename:
+        result = root_path
+    else:
+        result = root_path + '/' + filename
+    print("result", result)
+    return origin_code.replace(old_path, result)
 
 if __name__ == '__main__':
     CONFIG = configparser.ConfigParser()
