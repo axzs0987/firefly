@@ -123,6 +123,32 @@ def check_model(notebook_id):
         break
     return is_in
 
+def get_params_code_by_id(notebook_id):
+    cursor, db = create_connection()
+    sql = "SELECT operator.operator," \
+          "operator.parameter_1_code," \
+          "operator.parameter_2_code," \
+          "operator.parameter_3_code," \
+          "operator.parameter_4_code," \
+          "operator.parameter_5_code," \
+          "operator.parameter_6_code," \
+          "operator.parameter_7_code FROM operator WHERE  operator.notebook_id  = " + notebook_id
+    cursor.execute(sql)
+    sql_res = cursor.fetchall()
+    result = []
+    for row in sql_res:
+        one_operator_params = {
+            "name": row[0],
+            "p1": row[1],
+            "p2": row[2],
+            "p3": row[3],
+            "p4": row[4],
+            "p5": row[5],
+            "p6": row[6],
+            "p7": row[7],
+        }
+        result.append(one_operator_params)
+    return result
 
 def add_model(notebook_id, model_type):
     global CONFIG

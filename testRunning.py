@@ -3,7 +3,10 @@ from compile_notebook.read_ipynb import read_ipynb
 from compile_notebook.LR_matching import Feeding
 from compile_notebook.LR_matching import LR_run
 from notebook2sequence import single_running
+from utils import get_params_code_by_id
 import os
+
+
 
 def get_code_txt(path):
     cot_txt = ""
@@ -30,14 +33,25 @@ def found_dataset(old_path, notebook_id, root_path, origin_code):
     :return:
     如果运行时发现路径不对，找到需要替换的路径
     """
-    filename = old_path.split('/')[-1]
-    print('filename', filename)
-    if '.' not in filename:
-        result = root_path
-    else:
-        result = root_path + '/' + filename
+
+    old_root_path = ''
+    for index, i in enumerate(old_path.split('/')):
+        if index != len(old_path.split('/')) - 1:
+            old_root_path = old_root_path + i + '/'
+        else:
+            if '.' not in i:
+                old_root_path = old_root_path + i
+            if '/' == old_root_path[-1]:
+                old_root_path = old_root_path[0:-1]
+
+    result = root_path
+
+
+
+    print('old_root_path', old_root_path)
+
     print("result", result)
-    return origin_code.replace(old_path, result)
+    return origin_code.replace(old_root_path, result)
 
 
 def get_pairs(path):
@@ -58,7 +72,7 @@ def get_pairs(path):
 
     return notebook_name_list, dataset_name_list
 
-def insert_one_line_in_code(origin_code, under_line, target_line):
+def insert_one_line_in_code(origin_code, under_line, target_line, is_same = True):
     """
     :param origin_code: 原本代码
     :param under_line: 目标插入的位置，int，就是第几行（从0开始），string就是在匹配到包含此字符串的行的下面都插入
@@ -95,7 +109,8 @@ def insert_one_line_in_code(origin_code, under_line, target_line):
                 index_list.append(index)
             print(index, line)
         for index in range(0, len(index_list)):
-            target = converse_target(code_list[index_list[index]] , target_line)
+            if is_same == True:
+                target = converse_target(code_list[index_list[index]-1] , target_line)
             code_list.insert(index_list[index], target)
             if index != len(index_list)-1:
                 for after_index in range(index + 1, len(index_list)):
@@ -103,7 +118,8 @@ def insert_one_line_in_code(origin_code, under_line, target_line):
 
     #如果underline是数字，则在该行都下一行插入目标
     elif type(under_line).__name__ == 'int':
-        target = converse_target(code_list[under_line], target_line)
+        if is_same == True:
+            target = converse_target(code_list[under_line-1], target_line)
         code_list.insert(under_line, target)
 
     # 把list转文本
@@ -128,6 +144,8 @@ def print_readcsv(origin_code):
     :return:
     打印读入的数据，并且找到所有为字符串的列
     """
+    origin_code = insert_one_line_in_code(origin_code,0,"now_df = {}")
+    origin_code = insert_one_line_in_code(origin_code, 0, "new_count = {}")
     code_list = origin_code.split('\n')
     csv_index = []
     csv_varible = []
@@ -143,14 +161,20 @@ def print_readcsv(origin_code):
             origin_code = insert_one_line_in_code(origin_code, csv_index[i], column_name_code)
             for after_index in range(i , len(csv_index)):
                 csv_index[after_index] += 1
-        target_line = 'print("origin_data ' + str(i) + '" , ' + csv_varible[i] + ')'
+        target_line = 'origin_data_' + str(i) + '= ' + csv_varible[i]
         origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 1, target_line)
-        target_line = 'for col in ' + csv_varible[i] + ':'
+        target_line = 'print(origin_data_' + str(i) + ')'
         origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 2, target_line)
-        target_line = '    if str(' + csv_varible[i] + '[col].dtype) == "object":'
+        target_line = 'for col in ' + csv_varible[i] + ':'
         origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 3, target_line)
-        target_line = '        column_name.append(str(col))'
+        target_line = '    if str(' + csv_varible[i] + '[col].dtype) == "object":'
         origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 4, target_line)
+        target_line = '    column_name.append(str(col))'
+        origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 5, target_line)
+        target_line = 'now_df[str(col)] = []'
+        origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 6, target_line)
+        target_line = 'new_count[str(col)] = 0'
+        origin_code = insert_one_line_in_code(origin_code, csv_index[i] + 7, target_line)
         if i != len(csv_index) - 1:
             for after_index in range(i + 1, len(csv_index)):
                 csv_index[after_index] += 4
@@ -160,7 +184,7 @@ def print_readcsv(origin_code):
     result = ''
     for i in code_list:
         result = result + i + '\n'
-    return result
+    return result,len(csv_varible)
 
 
 def running(func_def, new_path,count):
@@ -173,12 +197,14 @@ def running(func_def, new_path,count):
     """
     try:
         cm = compile(func_def, '<string>', 'exec')
-    except:
-        return "compile fail"
+    except Exception as e:
+        print("compile fail", e)
     print("\033[0;33;40m" + str(count) +"\033[0m")
     can_run = False
     try:
-        exec(cm)
+        print(func_def)
+        ns = {}
+        exec(cm,ns)
         print("\033[0;32;40msucceed\033[0m")
         can_run = True
     except Exception as e:
@@ -201,153 +227,240 @@ def running(func_def, new_path,count):
             package = package[1:-1]
             command = ' pip install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
             os.system(command)
-        if count < 1 and can_run==False:
+        elif  ": No such file or directory" in error_str:
+            index1 = error_str.find("'")
+            index2 = error_str.find("'", index1+1)
+            error_path = error_str.substr(index1+1,index2)
+            new_code = found_dataset(error_path, 1, new_path, func_def)
+            print('error_path:', error_path)
+        if count < 4 and can_run==False:
+            # print(new_code)
             res = running(new_code, new_path, count + 1)
             return res
     return func_def
 
-def add_variable_code(origin_code, variable_list,notebook_name):
-    """
-    :param origin_code: 原始代码
-    :param variable_list: 数据流的变量名
-    :param notebook_name: notebook名字
-    :return:
-    该函数是为了得到字符串列的变化流。属于experiment任务。
-    """
+def add_variable_code(origin_code, variable_list,notebook_name, save_root="../strcol"):
+    function_def = \
+        """
+def compare_dataframe(new_df, column_list, save_path, origin_data_0=[]):
+    global new_count,now_df
+    import pandas as pd 
+    
+    def can_save(series1, series2):
+        print(series1.shape)
+        if len(series1) != len(series2):
+            print(len(series1),len(series2))
+            return 0
+        if (series1.index != series2.index).any():
+            print("index not same")
+            return -1
+        if not (series1.values == series2.values).any():
+            print("not same")
+            return 1
+        print("same")
+        return -1
+        
+    print('type new_df', type(new_df).__name__)
+    if type(new_df).__name__ != 'DataFrame' and type(new_df).__name__ != 'Series':
+        return
+
+    for column in column_list:
+        if type(now_df[column]).__name__ == 'list':
+            if str(new_df[column].dtype) != 'object':
+                continue
+            if os.path.exists(save_path) == False:
+                os.mkdir(save_path)
+            print("path:",save_path + '/' + column)
+            col_path = column
+            if '/' in column :
+                col_path = column.replace('/','_')
+            if os.path.exists(save_path + '/' + col_path) == False:
+                os.mkdir(save_path + '/' + col_path)
+            new_df[column].to_csv(save_path + '/' + col_path + '/' + str(new_count[column]) + '.csv')
+            now_df[column] = new_df[column]
+            new_count[column] += 1
+        elif type(new_df).__name__ == 'Series':
+            if column != new_df.name:
+                continue
+            print('series_name:', new_df.name)
+            temp_type = new_df.dtype
+                
+            if str(temp_type) != 'object':
+                continue
+            if str(now_df[new_df.name].dtype) != 'object':
+                continue
+                    
+                
+            resu = can_save(new_df, now_df[new_df.name])
+            print("series:",resu)
+            if resu != -1:
+                print(new_count[column], resu)
+                col_path = new_df.name
+                if '/' in new_df.name :
+                    col_path = column.replace('/','_')
+                if os.path.exists(save_path + '/' + col_path) == False:
+                    os.mkdir(save_path + '/' + col_path)
+                
+                new_df.to_csv(save_path + '/' + col_path + '/' + str(new_count[new_df.name]) + '.csv')
+                new_count[new_df.name] += 1
+                if resu == 1:
+                    pair = pd.DataFrame({'before':now_df[column], 'after': new_df})
+                    if os.path.exists(save_path + '/' + col_path + '/pair') == False:
+                        os.mkdir(save_path + '/' + col_path + '/pair')
+                    pair.to_csv(save_path + '/' + col_path + '/pair/' + str(new_count[new_df.name]) + '.csv')
+                now_df[column] = new_df   
+            if column in origin_data_0:
+                resu = can_save(new_df, origin_data_0[column])
+                if resu == 1:
+                    pair = pd.DataFrame({'before':origin_data_0[column], 'after': new_df})
+                    if os.path.exists(save_path + '/' + col_path + '/pair') == False:
+                        os.mkdir(save_path + '/' + col_path + '/pair')
+                    pair.to_csv(save_path + '/' + col_path + '/pair/origin_' + str(new_count[column]) + '.csv')
+                    now_df[column] = new_df 
+        else:
+            if column not in new_df.columns.values:
+                continue
+            temp_type = new_df[column].dtype
+            
+            if str(temp_type) != 'object':
+                continue
+            if str(now_df[column].dtype) != 'object':
+                continue
+                    
+                
+            resu = can_save(new_df[column], now_df[column])
+            print("df:",resu)
+            if resu != -1:
+                print(new_count[column], resu)
+                col_path = column
+                if '/' in column :
+                    col_path = column.replace('/','_')
+                if os.path.exists(save_path + '/' + col_path) == False:
+                    os.mkdir(save_path + '/' + col_path)
+                
+                new_df[column].to_csv(save_path + '/' + col_path + '/' + str(new_count[column]) + '.csv')
+                new_count[column] += 1
+                
+                print(now_df.keys())
+                
+                if resu == 1:
+                    pair = pd.DataFrame({'before':now_df[column], 'after': new_df[column]})
+                    if os.path.exists(save_path + '/' + col_path + '/pair') == False:
+                        os.mkdir(save_path + '/' + col_path + '/pair')
+                    pair.to_csv(save_path + '/' + col_path + '/pair/' + str(new_count[column]) + '.csv')
+                        
+                now_df[column] = new_df[column]
+            if column in origin_data_0:
+                resu = can_save(new_df[column], origin_data_0[column])
+                if resu == 1:
+                    pair = pd.DataFrame({'before':origin_data_0[column], 'after': new_df[column]})
+                    if os.path.exists(save_path + '/' + col_path + '/pair') == False:
+                        os.mkdir(save_path + '/' + col_path + '/pair')
+                    pair.to_csv(save_path + '/' + col_path + '/pair/origin_' + str(new_count[column]) + '.csv')
+                    now_df[column] = new_df[column]
+        """
+    cod_li = origin_code.split('\n')
+    head = 0
+    for ind, i in enumerate(cod_li):
+        if i == 'column_name=[]':
+            head = ind
+            break
+    origin_code = insert_one_line_in_code(origin_code, head+1, function_def)
+    print("weewrwL:", origin_code)
     code_list = origin_code.split('\n')
-    line = "def add_pair(series1, series2,save_path_file):"
-    code_list.append(line)
-    line = "    if len(series1) != len(series2):"
-    code_list.append(line)
-    line = "        return series1"
-    code_list.append(line)
-    line = "    if (series1.index != series2.index).any():"
-    code_list.append(line)
-    line = "        return series1"
-    code_list.append(line)
-    line = "    if (series1.values != series2.values).any():"
-    code_list.append(line)
-    line = "        result = pd.DataFrame([series1, series2])"
-    code_list.append(line)
-    line = "        result.to_csv(save_path_file)"
-    code_list.append(line)
-    line = "        return series2"
-    code_list.append(line)
-    line = "    return series1"
-    code_list.append(line)
+    add_num = 0
+    is_add_column = False
+    for line_num in range(0, len(code_list)):
+        varible_li = code_list[line_num].split('=')
+        if len(varible_li) == 1:
+            continue
+        for variable in variable_list:
+            if variable == varible_li[0].strip():
+                if 'read_csv' in code_list[line_num] and is_add_column == False:
+                    origin_code = insert_one_line_in_code(origin_code, line_num + 1 + add_num + 8, target_line="compare_dataframe("+ variable + ", column_name, '" + save_root +'/' + notebook_name + "')")
+                    is_add_column = True
+                elif 'read_csv' in code_list[line_num] and is_add_column == True:
+                    origin_code = insert_one_line_in_code(origin_code, line_num + 1 + add_num + 7, target_line="compare_dataframe("+ variable + ", column_name, '" + save_root +'/' + notebook_name + "')")
+                elif 'origin_data' in variable:
+                    origin_code = insert_one_line_in_code(origin_code, line_num + 1 + add_num + 5, target_line="compare_dataframe("+ variable + ", column_name, '" + save_root +'/' + notebook_name + "')")
+                else:
+                    origin_code = insert_one_line_in_code(origin_code,line_num + 1 + add_num,target_line="compare_dataframe("+ variable + ", column_name, '" + save_root +'/' + notebook_name + "')")
+                add_num += 1
+                break
+    print("weewrwLssssssssss:", origin_code)
+
+    return origin_code
+
+def add_params(id, notebook_name,notebook_root, dataset_name, dataset_root):
+
+    walk_logs = single_running(1, notebook_name.split('.')[0], notebook_root)
+    param_code_list = get_params_code_by_id(id)
+
+    notebook_path = notebook_root + '/' + notebook_name
+    dataset_path_root = dataset_root + '/' + dataset_name
+    func_def = get_code_txt(notebook_path)
+
+    code_list = func_def.split('\n')
+
+    code_index = 0
+    now_insert_num = 0
+    for index, i in range(param_code_list):
+        if i['name'] + '(' + i['p1'] in code_list[code_index] or i['name'] + '( ' + i['p1'] in code_list[code_index]:
+            #找到operaotr对应的行了 A=LabelEncoder()
+            parameter_code = code_list[code_index].substr[code_list[code_index].find(i['name']+'(') + len(i['name']):]
+            parameter_lis_str = parameter_code[0:parameter_code.find(')')]
+            parameter_value_list = parameter_lis_str.split(',')
+            for ind,param_value in parameter_value_list:
+                code_list.insert(code_index + ind + 1, "insert_param_db(notebook_id, " + str(ind+1) + "," + param_value + ")")
 
 
 
-    line = "def compare_series(series1, series2):"
-    code_list.append(line)
-    line = "    if len(series1) != len(series2):"
-    code_list.append(line)
-    line = "        return False"
-    code_list.append(line)
-    line = "    if (series1.index != series2.index).any():"
-    code_list.append(line)
-    line = "        return False"
-    code_list.append(line)
-    line = "    if (series1.values != series2.values).any():"
-    code_list.append(line)
-    line = "        print(series1.values != series2.values)"
-    code_list.append(line)
-    line = "        return False"
-    code_list.append(line)
-    line = "    return True"
-    code_list.append(line)
 
-    line = "for column in column_name:"
-    code_list.append(line)
-    line = "    new_column_df = []"
-    code_list.append(line)
-    line = "    pair_column_df = []"
-    code_list.append(line)
-    line = "    count = 0"
-    code_list.append(line)
-    line = "    pair_count = 0"
-    code_list.append(line)
-    line = "    save_path = '../strcol/" + notebook_name + "'"
-    code_list.append(line)
-    line = "    if os.path.exists(save_path) == False:"
-    code_list.append(line)
-    line = "        os.mkdir(save_path)"
-    code_list.append(line)
-    line = "    save_path = '../strcol/" + notebook_name + "/' + column"
-    code_list.append(line)
-    line = "    if os.path.exists(save_path) == False:"
-    code_list.append(line)
-    line = "        os.mkdir(save_path)"
-    code_list.append(line)
-    line = "    pair_path = '../strcol/" + notebook_name + "/' + column + '/pair'"
-    code_list.append(line)
-    line = "    if os.path.exists(pair_path) == False:"
-    code_list.append(line)
-    line = "        os.mkdir(pair_path)"
-    code_list.append(line)
-    for i in variable_list:
-        line = "    if type(" + i + ").__name__ == 'DataFrame':"
-        code_list.append(line)
-        line = "        if column in [column for column in " +  i + "]:"
-        code_list.append(line)
-        line = "            if str(" + i + "[column].dtype) == 'object':"
-        code_list.append(line)
-        line = "                save_pair_file = pair_path + '/' + str(pair_count) + '.csv'"
-        code_list.append(line)
-        line = "                pair_column_df = add_pair(pair_column_df, " + i + "[column], save_pair_file)"
-        code_list.append(line)
-        line = "                if compare_series(" + i + "[column], new_column_df) == False:"
-        code_list.append(line)
-        line = "                    new_column_df = " + i + "[column]"
-        code_list.append(line)
-        line = "                    save_path_file = save_path + '/' + str(count) + '.csv'"
-        code_list.append(line)
-        line = "                    " + i + "[column].to_csv(save_path_file)"
-        code_list.append(line)
-        line = "                    count += 1"
-        code_list.append(line)
-    result = ''
-    for i in code_list:
-        result = result + i + '\n'
-    return result
 
-# def get_result(origin_code, notebook_id)
 
 def test_running(notebook_root, dataset_root, notebook_name, dataset_name):
+    """
+    获取字符串变化
+    :param notebook_root:
+    :param dataset_root:
+    :param notebook_name:
+    :param dataset_name:
+    :return:
+    """
     notebook_path = notebook_root + '/' + notebook_name
     dataset_path_root = dataset_root + '/' + dataset_name
     func_def = get_code_txt(notebook_path)
     can_run_code = running(func_def,dataset_path_root,0)
     if can_run_code == "compile fail":
+        print("\033[0;31;40mcompile fail\033[0m")
         return
-    # print("can_run_code",can_run_code)
-    # add_csv_code = print_readcsv(can_run_code)
-    # can_run_code = running(add_csv_code, dataset_path_root, 0)
-    # print("can_run_code", can_run_code)
+
 
     walk_logs = single_running(1, notebook_name.split('.')[0], notebook_root)
-    print(walk_logs['data_values'])
-    print(walk_logs['data_types'])
 
-    add_csv_code = print_readcsv(can_run_code)
-    print("add_varible_code:", add_csv_code)
-    can_run_code = running(add_csv_code, dataset_path_root, 0)
+    add_csv_code,num_origin = print_readcsv(can_run_code)
+    varible_list = []
+    for i in range(0, num_origin):
+        varible_list.append("origin_data_" + str(i))
+    for i in walk_logs["data_values"]:
+        varible_list.append(i)
 
-    add_varible_code_content = add_variable_code(can_run_code, walk_logs['data_values'],notebook_name.split('.')[0])
-    print("add_varible_code_content:", add_varible_code_content)
+    add_varible_code_content = add_variable_code(add_csv_code, varible_list,notebook_name.split('.')[0])
     can_run_code = running(add_varible_code_content, dataset_path_root, 0)
-
-    # print("can_run_code", can_run_code)
 
 def batch_running(notebook_root,dataset_root,pair_path):
     notebook_name_list, dataset_name_list = get_pairs(pair_path)
-    for i in range(1, 2):
+    for i in range(0,len(notebook_name_list)):
         try:
             notebook_name = notebook_name_list[i]
             dataset_name =  dataset_name_list[i]
+
+            # if notebook_name == "most-dangerous-departure-and-destination-cities.ipynb":
+            print("\033[0;31;44m" + notebook_name + "\033[0m")
             test_running(notebook_root, dataset_root, notebook_name, dataset_name)
-            print("\033[0;32;40m\tsucceed\033[0m")
+            # print("\033[0;32;40m\tsucceed\033[0m")
         except:
+            continue
             print("\033[0;31;40m\terror\033[0m")
 
 
@@ -356,13 +469,3 @@ if __name__ == '__main__':
     batch_running("../spider/notebook", '../spider/unzip_dataset', '../spider/pair.txt')
 
 
-
-#    func_def = get_code_txt('../notebook/bike-sharing-exploratory-analysis.ipynb')
-#    cm = compile(func_def, '<string>', 'exec')
-#    try:
-#        exec(cm)
-#    except Exception as e:        
-#        print(e)
-
-    # r_node = ast.parse(fillna_example)
-    # print(astunparse.dump(r_node))
