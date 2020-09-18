@@ -242,6 +242,11 @@ def running(func_def, new_path,count):
 def add_variable_code(origin_code, variable_list,notebook_name, save_root="../strcol"):
     function_def = \
         """
+def insert_param_db():
+
+def save_middle_df():
+
+
 def compare_dataframe(new_df, column_list, save_path, origin_data_0=[]):
     global new_count,now_df
     import pandas as pd 
@@ -410,10 +415,12 @@ def add_params(id, notebook_name,notebook_root, dataset_name, dataset_root):
             parameter_code = code_list[code_index].substr[code_list[code_index].find(i['name']+'(') + len(i['name']):]
             parameter_lis_str = parameter_code[0:parameter_code.find(')')]
             parameter_value_list = parameter_lis_str.split(',')
-            for ind,param_value in parameter_value_list:
+            ind = 0
+            for param_value in parameter_value_list:
                 code_list.insert(code_index + ind + 1, "insert_param_db(notebook_id, " + str(ind+1) + "," + param_value + ")")
+                ind+=1
 
-
+            insert_one_line_in_code(code_index + ind + 1, "save_middle_df(notebook_id, " + str(i['rank']) + "," + i['data_object_value'] + ")")
 
 
 

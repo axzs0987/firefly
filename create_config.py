@@ -133,6 +133,13 @@ config["operators"] = {
             "physic_operations": ["Scaler"],
             "params": ["with_centering", "with_scaling", "quantile_range", "copy"],
         },
+        "clip": {
+            "call_type": 4,
+        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
+            "logic_operations": 'Scale',
+            "physic_operations": ["clip"],
+            "params": ["a", "a_min", "a_max", "out"],
+        },
         "Normalizer": {
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
@@ -140,12 +147,96 @@ config["operators"] = {
             "physic_operations": ["normalization"],
             "params": ["X", "norm", "axis", "copy", "return_norm"],
         },
+        "l2_normalize":{
+            "call_type": 4,
+        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Normalization',
+            "physic_operations": ["normalization"],
+            "params": ["x", "axis", "epsilon", "name", "dim"],
+        },
         "PCA": {
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, fit = 4;
-            "logic_operations": 'PCA',
+            "logic_operations": 'DimensionReduction',
             "physic_operations": ["PCA"],
             "params": ["n_components", "copy", "whiten", "svd_solver", "tol", "iterated_power", "random_state"],
+        },
+        "drop": {
+            "call_type": 0,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, fit = 4;
+            "logic_operations": 'DimensionReduction',
+            "physic_operations": ["drop_column"],
+            "params": ["labels", "axis", "index", "columns", "level", "inplace", "errors"],
+        },
+        "drop_duplicates":{
+            "call_type": 0,
+        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
+            "logic_operations": 'Unique',
+            "physic_operations": ["unique"],
+            "params": ["subset", "keep", "inplace", "ignore_index"],
+        },
+        "unique":{
+            "call_type": 2,
+        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
+            "logic_operations": 'Unique',
+            "physic_operations": ["unique"],
+            "params": ["values"],
+        },
+        "boxcox": {
+            "call_type": 4,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Smooth',
+            "physic_operations": ["skew_and_kurt"],
+            "params": ["x", "lmbda", "alpha"],
+        },
+        "boxcox1p": {
+            "call_type": 4,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Smooth',
+            "physic_operations": ["skew_and_kurt"],
+            "params": ["x", "lmbda"],
+        },
+        "log": {
+            "call_type": 4,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Smooth',
+            "physic_operations": ["skew"],
+            "params": ["x", "out", "where"],
+        },
+        "log1p": {
+            "call_type": 4,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Smooth',
+            "physic_operations": ["skew"],
+            "params": ["x", "out", "where"],
+        },
+        "expm1": {
+            "call_type": 4,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Smooth',
+            "physic_operations": ["inverse_skew"],
+            "params": ["x", "out", "where"],
+        },
+        "cut": {
+            "call_type": 2,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Cut',
+            "physic_operations": ["cut"],
+            "params": ["x", "bins", "right", "labels", "retbins", "precision", "include_lowest", "duplicates"],
+        },
+        "qcut": {
+            "call_type": 2,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'Cut',
+            "physic_operations": ["cut"],
+            "params": ["x", "q","labels", "retbins", "precision", "duplicates"],
+        },
+        "map": {
+            "call_type": 0,
+            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
+            "logic_operations": 'ValueTransform',
+            "physic_operations": ["value_transform"],
+            "params": ["arg", "na_action"],
         },
     }
 }

@@ -2,6 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2e5c4e3b-8dae-423b-b670-90900ab00514" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/compile_notebook.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/create_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/create_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebook2sequence.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebook2sequence.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testRunning.py" beforeDir="false" afterPath="$PROJECT_DIR$/testRunning.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
@@ -25,25 +29,25 @@
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="ini" value="1" />
-          <entry key="ipynb" value="14" />
+          <entry key="ipynb" value="28" />
           <entry key="py" value="9" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="IPNB" value="14" />
+          <entry key="IPNB" value="28" />
           <entry key="Ini" value="1" />
           <entry key="Python" value="9" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="32126" />
+          <entry key="py" value="37485" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="32126" />
+          <entry key="Python" value="37485" />
         </counts>
       </usages-collector>
     </session>
@@ -53,8 +57,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/create_config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="31" selection-start-line="9" selection-start-column="9" selection-end-line="9" selection-end-column="31" />
+            <state relative-caret-position="201">
+              <caret line="164" column="22" selection-start-line="164" selection-start-column="13" selection-end-line="164" selection-end-column="22" />
             </state>
           </provider>
         </entry>
@@ -62,30 +66,41 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="309">
-              <caret line="134" column="97" selection-start-line="134" selection-start-column="97" selection-end-line="134" selection-end-column="97" />
+            <state relative-caret-position="315">
+              <caret line="284" column="26" selection-start-line="284" selection-start-column="26" selection-end-line="284" selection-end-column="26" />
               <folding>
                 <element signature="e#0#50#0" expanded="true" />
-                <marker date="1600158899764" expanded="true" signature="3440:4272" ph="..." />
-                <marker date="1600158899764" expanded="true" signature="8485:8487" ph="..." />
+                <marker date="1600393815153" expanded="true" signature="3470:4457" ph="..." />
+                <marker date="1600393815153" expanded="true" signature="10143:10144" ph="..." />
+                <marker date="1600393815153" expanded="true" signature="10186:11249" ph="..." />
+                <marker date="1600393815153" expanded="true" signature="11316:14141" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/testRunning.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="130">
-              <caret line="248" column="35" lean-forward="true" selection-start-line="248" selection-start-column="35" selection-end-line="248" selection-end-column="35" />
+            <state relative-caret-position="-3495">
+              <caret line="74" column="27" selection-start-line="74" selection-start-column="4" selection-end-line="74" selection-end-column="27" />
               <folding>
                 <element signature="e#1#51#0" expanded="true" />
-                <marker date="1600170864876" expanded="true" signature="8473:8474" ph="..." />
-                <marker date="1600170864876" expanded="true" signature="14157:15797" ph="..." />
-                <marker date="1600170864876" expanded="true" signature="15773:15778" ph="..." />
-                <marker date="1600170864876" expanded="true" signature="15797:16897" ph="..." />
-                <marker date="1600170864876" expanded="true" signature="16972:16977" ph="..." />
+                <marker date="1600237893231" expanded="true" signature="8473:8474" ph="..." />
+                <marker date="1600237893231" expanded="true" signature="14205:15845" ph="..." />
+                <marker date="1600237893231" expanded="true" signature="15821:15826" ph="..." />
+                <marker date="1600237893231" expanded="true" signature="15845:17127" ph="..." />
+                <marker date="1600237893231" expanded="true" signature="17202:17207" ph="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/fsdownload/saleprice-prediction.ipynb">
+          <provider selected="true" editor-type-id="ipnb-editor">
+            <state>
+              <selected id="7" />
             </state>
           </provider>
         </entry>
@@ -94,7 +109,7 @@
         <entry file="file://$PROJECT_DIR$/show_defference.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="210">
-              <caret line="14" column="49" lean-forward="true" selection-start-line="14" selection-start-column="49" selection-end-line="14" selection-end-column="49" />
+              <caret line="14" column="49" selection-start-line="14" selection-start-column="49" selection-end-line="14" selection-end-column="49" />
               <folding>
                 <marker date="1600169766871" expanded="true" signature="53:58" ph="..." />
               </folding>
@@ -102,16 +117,16 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="419">
-              <caret line="1039" column="22" selection-start-line="1039" selection-start-column="8" selection-end-line="1039" selection-end-column="22" />
+            <state relative-caret-position="111">
+              <caret line="448" column="36" selection-start-line="448" selection-start-column="36" selection-end-line="448" selection-end-column="36" />
               <folding>
                 <element signature="e#0#30#0" expanded="true" />
-                <marker date="1599973006885" expanded="true" signature="1249:2408" ph="..." />
-                <marker date="1599973006885" expanded="true" signature="5882:6829" ph="..." />
-                <marker date="1599973006885" expanded="true" signature="46068:46073" ph="..." />
+                <marker date="1600417692122" expanded="true" signature="1249:2408" ph="..." />
+                <marker date="1600417692122" expanded="true" signature="5901:6911" ph="..." />
+                <marker date="1600417692122" expanded="true" signature="57523:57528" ph="..." />
               </folding>
             </state>
           </provider>
@@ -137,36 +152,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>get_pairs</find>
-      <find>notoebook_name</find>
-      <find>dtype</find>
-      <find>Object</find>
-      <find>object</find>
-      <find>add_pair</find>
-      <find>test_running</find>
-      <find>walk_logs[&quot;data_values&quot;]</find>
-      <find>../strcol</find>
-      <find>insert_one_line_in_code</find>
-      <find>compare_series</find>
-      <find>new_column_df</find>
-      <find>print_readcsv</find>
-      <find>add_variable_code</find>
-      <find>running</find>
-      <find>can_save</find>
-      <find>error_str</find>
-      <find>Series</find>
-      <find>compare_dataframe</find>
-      <find>new_count</find>
-      <find>type new_df</find>
-      <find>if column not in</find>
-      <find>exec</find>
-      <find>print_read</find>
-      <find>walk_logs[&quot;data_values&quot;].append</find>
-      <find>batch_running</find>
-      <find>this_walk_logs</find>
-      <find>single_running</find>
-      <find>found_dataset</find>
       <find>succeed</find>
+      <find>add_sequence_from_walk_logs</find>
+      <find>single_running</find>
+      <find>add_operator</find>
+      <find>data_param_id</find>
+      <find>data_param_name</find>
+      <find>create_new_funcdef_sequence_node</find>
+      <find>check_model</find>
+      <find>get_params_code_by_id</find>
+      <find>now_func_args</find>
+      <find>add_model</find>
+      <find>cant_sequence</find>
+      <find>col_list:</find>
+      <find>stastic_operator_sequence_by_dataset</find>
+      <find>get_all_column_list</find>
+      <find>(data_root_path + '/' + data_path)</find>
+      <find>data_flowing</find>
+      <find>data_types</find>
+      <find>data_values</find>
+      <find>walk_logs[&quot;data_values&quot;].append(</find>
+      <find>get_column_seq</find>
+      <find>unknown</find>
+      <find>found_dataset</find>
+      <find>check_object_column</find>
+      <find>missing_values</find>
+      <find>2)</find>
+      <find>map</find>
+      <find>drop</find>
+      <find>Num</find>
+      <find>, 0)</find>
     </findStrings>
     <replaceStrings>
       <replace>3</replace>
@@ -190,22 +205,28 @@
         <option value="$PROJECT_DIR$/test_data/alex-kernel-4-employee-attrition-logistic-knn.ipynb" />
         <option value="$PROJECT_DIR$/test_data/behaviour-based-content-clustering.ipynb" />
         <option value="$PROJECT_DIR$/sss33.ipynb" />
-        <option value="$PROJECT_DIR$/create_config.py" />
         <option value="$USER_HOME$/Downloads/firefly-master/testRunning.py" />
         <option value="$USER_HOME$/fsdownload/bike-sharing-exploratory-analysis.ipynb" />
         <option value="$PROJECT_DIR$/get_string_pairs.py" />
-        <option value="$PROJECT_DIR$/notebook2sequence.py" />
-        <option value="$PROJECT_DIR$/utils.py" />
         <option value="$PROJECT_DIR$/show_defference.py" />
+        <option value="$USER_HOME$/fsdownload/saleprice-prediction.ipynb" />
+        <option value="$PROJECT_DIR$/utils.py" />
+        <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/unknown/5-findings-based-on-survey-response-time.ipynb/5-findings-based-on-survey-response-time.ipynb" />
+        <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/boost/4-financial-fraud-detection-xgboost.ipynb" />
+        <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/classification/do-you-have-chest-pain.ipynb/do-you-have-chest-pain.ipynb" />
+        <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/beginner/house-price-prediction-with-catboost.ipynb/house-price-prediction-with-catboost.ipynb" />
+        <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/data-cleaning/ashrae-building-energy-prediction-lightgbm.ipynb/ashrae-building-energy-prediction-lightgbm.ipynb" />
         <option value="$PROJECT_DIR$/testRunning.py" />
+        <option value="$PROJECT_DIR$/create_config.py" />
+        <option value="$PROJECT_DIR$/notebook2sequence.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1193" />
-    <option name="y" value="-109" />
+    <option name="x" value="-1109" />
+    <option name="y" value="-164" />
     <option name="width" value="1087" />
-    <option name="height" value="741" />
+    <option name="height" value="826" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -243,7 +264,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1193" y="-109" width="1087" height="741" extended-state="0" />
+    <frame x="-1109" y="-164" width="1087" height="826" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.08267509" />
@@ -257,7 +278,7 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.73639774" weight="0.047765795" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="8" sideWeight="0.73639774" visible="true" weight="0.13623978" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.26360226" side_tool="true" weight="0.047765795" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -292,8 +313,23 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>438</line>
+          <line>445</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/utils.py</url>
+          <line>187</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/notebook2sequence.py</url>
+          <line>1141</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/create_config.py</url>
+          <line>146</line>
+          <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -361,59 +397,152 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="419">
-          <caret line="1039" column="22" selection-start-line="1039" selection-start-column="8" selection-end-line="1039" selection-end-column="22" />
-          <folding>
-            <element signature="e#0#30#0" expanded="true" />
-            <marker date="1599973006885" expanded="true" signature="1249:2408" ph="..." />
-            <marker date="1599973006885" expanded="true" signature="5882:6829" ph="..." />
-            <marker date="1599973006885" expanded="true" signature="46068:46073" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/create_config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="31" selection-start-line="9" selection-start-column="9" selection-end-line="9" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/show_defference.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
-          <caret line="14" column="49" lean-forward="true" selection-start-line="14" selection-start-column="49" selection-end-line="14" selection-end-column="49" />
+          <caret line="14" column="49" selection-start-line="14" selection-start-column="49" selection-end-line="14" selection-end-column="49" />
           <folding>
             <marker date="1600169766871" expanded="true" signature="53:58" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="134" column="97" selection-start-line="134" selection-start-column="97" selection-end-line="134" selection-end-column="97" />
-          <folding>
-            <element signature="e#0#50#0" expanded="true" />
-            <marker date="1600158899764" expanded="true" signature="3440:4272" ph="..." />
-            <marker date="1600158899764" expanded="true" signature="8485:8487" ph="..." />
-          </folding>
+    <entry file="file://$USER_HOME$/fsdownload/saleprice-prediction.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/unknown/5-findings-based-on-survey-response-time.ipynb/5-findings-based-on-survey-response-time.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/boost/4-financial-fraud-detection-xgboost.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/classification/do-you-have-chest-pain.ipynb/do-you-have-chest-pain.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="108" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/data-visualization/heart-disease-descriptive-analytics.ipynb/heart-disease-descriptive-analytics.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/beginner/house-price-prediction-with-catboost.ipynb/house-price-prediction-with-catboost.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/1-deep-visualization-data-processing.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/data-cleaning/ashrae-building-energy-prediction-lightgbm.ipynb/ashrae-building-energy-prediction-lightgbm.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="146" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/classification/housing-price-regression-for-absolute-beginners.ipynb/housing-price-regression-for-absolute-beginners.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/regress/graduate-admission-eda-linear-regression.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/eda/heart-disease-descriptive-analytics.ipynb/heart-disease-descriptive-analytics.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/eda/ufc-eda-fe-for-xgboost-and-other-algorithms.ipynb/ufc-eda-fe-for-xgboost-and-other-algorithms.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/firefly-master/filtPandas/unknown/keras-triplet-loss-lb-0-224.ipynb/keras-triplet-loss-lb-0-224.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="1" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testRunning.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="130">
-          <caret line="248" column="35" lean-forward="true" selection-start-line="248" selection-start-column="35" selection-end-line="248" selection-end-column="35" />
+        <state relative-caret-position="-3495">
+          <caret line="74" column="27" selection-start-line="74" selection-start-column="4" selection-end-line="74" selection-end-column="27" />
           <folding>
             <element signature="e#1#51#0" expanded="true" />
-            <marker date="1600170864876" expanded="true" signature="8473:8474" ph="..." />
-            <marker date="1600170864876" expanded="true" signature="14157:15797" ph="..." />
-            <marker date="1600170864876" expanded="true" signature="15773:15778" ph="..." />
-            <marker date="1600170864876" expanded="true" signature="15797:16897" ph="..." />
-            <marker date="1600170864876" expanded="true" signature="16972:16977" ph="..." />
+            <marker date="1600237893231" expanded="true" signature="8473:8474" ph="..." />
+            <marker date="1600237893231" expanded="true" signature="14205:15845" ph="..." />
+            <marker date="1600237893231" expanded="true" signature="15821:15826" ph="..." />
+            <marker date="1600237893231" expanded="true" signature="15845:17127" ph="..." />
+            <marker date="1600237893231" expanded="true" signature="17202:17207" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="284" column="26" selection-start-line="284" selection-start-column="26" selection-end-line="284" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#50#0" expanded="true" />
+            <marker date="1600393815153" expanded="true" signature="3470:4457" ph="..." />
+            <marker date="1600393815153" expanded="true" signature="10143:10144" ph="..." />
+            <marker date="1600393815153" expanded="true" signature="10186:11249" ph="..." />
+            <marker date="1600393815153" expanded="true" signature="11316:14141" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/create_config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="201">
+          <caret line="164" column="22" selection-start-line="164" selection-start-column="13" selection-end-line="164" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="111">
+          <caret line="448" column="36" selection-start-line="448" selection-start-column="36" selection-end-line="448" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+            <marker date="1600417692122" expanded="true" signature="1249:2408" ph="..." />
+            <marker date="1600417692122" expanded="true" signature="5901:6911" ph="..." />
+            <marker date="1600417692122" expanded="true" signature="57523:57528" ph="..." />
           </folding>
         </state>
       </provider>

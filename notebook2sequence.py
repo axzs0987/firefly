@@ -182,7 +182,7 @@ def data_flowing(left, right):
                     walk_logs["data_types"].append("data")
 
 
-def create_new_sequence_node(operator_name, physic_operation, args_name, keywords_name, data_object):
+def create_new_sequence_node(operator_name, physic_operation, args_name, keywords_name, data_object, data_object_value):
     global walk_logs
     params_key = eval(CONFIG.get('operators', 'operations'))[operator_name]["params"]
     new_operator_node = {}
@@ -191,6 +191,7 @@ def create_new_sequence_node(operator_name, physic_operation, args_name, keyword
     new_operator_node["parameter_type"] = {}
     new_operator_node["physic_operation"] = physic_operation
     new_operator_node["data_object"] = data_object
+    new_operator_node["data_object_value"] = data_object_value
     for i in range(0, len(args_name)):
         args_code = args_name[i][0]
         args_type = args_name[i][1]
@@ -205,7 +206,7 @@ def create_new_sequence_node(operator_name, physic_operation, args_name, keyword
     walk_logs["operator_sequence"].append(new_operator_node)
     return new_operator_node
 
-def create_new_funcdef_sequence_node(operator_name, physic_operation, args_name, keywords_name, data_param_id, data_param_name):
+def create_new_funcdef_sequence_node(operator_name, physic_operation, args_name, keywords_name, data_param_id, data_param_name, data_object_value):
     global walk_logs,condition_switch
     params_key = eval(CONFIG.get('operators', 'operations'))[operator_name]["params"]
     new_operator_node = {}
@@ -215,6 +216,7 @@ def create_new_funcdef_sequence_node(operator_name, physic_operation, args_name,
     new_operator_node["physic_operation"] = physic_operation
     new_operator_node["data_param_id"] = data_param_id
     new_operator_node["data_param_name"] = data_param_name
+    new_operator_node["data_object_value"] = data_object_value
     for i in range(0, len(args_name)):
         args_code = args_name[i][0]
         args_type = args_name[i][1]
@@ -239,6 +241,7 @@ def functiondef_sequence_node_to_operator_sequence_node(fsn, data_object):
     new_operator_node["data_object"] = data_object
     new_operator_node["parameter_code"] = fsn["parameter_code"]
     new_operator_node["parameter_type"] = fsn["parameter_type"]
+    new_operator_node["data_object_value"] = fsn["data_object_value"]
     walk_logs["operator_sequence"].append(new_operator_node)
     return new_operator_node
 
@@ -428,9 +431,10 @@ def walking(node):
             this_funcdef_sequence = walk_logs["funcdef_sequence"][func_name]
             for operator_node in this_funcdef_sequence:
                 for num in range(0, len(walk_logs["data_values"])):
-                    if walk_logs["data_values"][num] == args_name[operator_node["data_param_id"]][0] or walk_logs["data_values"][num] == keywords_name[operator_node["data_param_name"]][0]: # 如果自定义函数内部序列的数据参数对象，在这里对应数据是数据流里，则把增额操作加入到主序列里边
-                        data_object = walk_logs["data_types"][num]
-                        functiondef_sequence_node_to_operator_sequence_node(operator_node, data_object)
+                    if operator_node["data_param_name"] != None:
+                        if walk_logs["data_values"][num] == args_name[operator_node["data_param_id"]][0] or walk_logs["data_values"][num] == keywords_name[operator_node["data_param_name"]][0]: # 如果自定义函数内部序列的数据参数对象，在这里对应数据是数据流里，则把增额操作加入到主序列里边
+                            data_object = walk_logs["data_types"][num]
+                            functiondef_sequence_node_to_operator_sequence_node(operator_node, data_object)
 
             #************处理读入函数******************
             if func_name == walk_logs["read_function"] and condition_switch["is_assign"] == True: #如果这个函数是读入文件函数，且在外赋值
@@ -454,11 +458,50 @@ def walking(node):
                         if len(args_name) != 0:
                             if (args_name[0][1] == 'Str' or args_name[0][1] == 'Num'): # 如果fillna的第一个参数的类型是常数
                                 physic_operation = "filling_constant"
+                    if node.func.attr == 'map':
+                        if type(node.args[0]).__name__ == 'Dict':
+                            dataset_name = walking(node.func.value)
+                            for i in range(0, len(condition_switch["now_func_args"])):
+                                if (dataset_name == condition_switch["now_func_args"][i]):
+                                    create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name,
+                                                                     keywords_name, data_param_id=i,
+                                                                     data_param_name=dataset_name,
+                                                                     data_object_value=astunparse.unparse(node.func))
+                    elif node.func.attr == 'drop':
+                        can_add = 0
+                        if len(node.args) > 1:
+                            if type(node.args[1]).__name__ == 'Num':
+                                if node.args[1].n == 1: # 如果存在两个参数，且第二个参数为1
+                                    can_add = 1
+                        else:
+                            for key_node in node.keywords:
+                                key = key_node.arg
+                                if key == "axis":
+                                    if type(key_node.value).__name__ == 'Num':
+                                        if key_node.value.n == 1:  # 如果存在两个参数，且第二个参数为1
+                                            can_add = 1
+                                            break
+                                elif key == 'columns':
+                                    can_add = 1
+                                    break
+                                else:
+                                    continue
+                        if can_add == 1:
+                            dataset_name = walking(node.func.value)
+                            for i in range(0, len(condition_switch["now_func_args"])):
+                                if (dataset_name == condition_switch["now_func_args"][i]):
+                                    create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name,
+                                                                     keywords_name, data_param_id=i,
+                                                                     data_param_name=dataset_name,
+                                                                     data_object_value=astunparse.unparse(node.func))
 
-                    dataset_name = walking(node.func.value)
-                    for i in range(0, len(condition_switch["now_func_args"])):
-                        if (dataset_name == condition_switch["now_func_args"][i]):
-                            create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_param_id=i, data_param_name=dataset_name)
+
+
+                    else:
+                        dataset_name = walking(node.func.value)
+                        for i in range(0, len(condition_switch["now_func_args"])):
+                            if (dataset_name == condition_switch["now_func_args"][i]):
+                                create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_param_id=i, data_param_name=dataset_name, data_object_value=astunparse.unparse(node.func))
 
                 elif check_operators(node.func.attr, 2):  # 如果命中操作
                     attr_body = walking(node.func.value)
@@ -472,8 +515,27 @@ def walking(node):
                             if (dataset_name == condition_switch["now_func_args"][i]):
                                 create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name,
                                                                   keywords_name, data_param_id=i,
-                                                                  data_param_name=dataset_name)
-
+                                                                  data_param_name=dataset_name,data_object_value=astunparse.unparse(node.args[0]))
+                elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    attr_body = walking(node.func.value)
+                    physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
+                    if(len(node.args) != 0):
+                        dataset_name = walking(node.args[0])
+                    else:
+                        dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                    is_in = False
+                    for i in range(0, len(walk_logs["data_values"])):
+                        if (dataset_name == walk_logs["data_values"][i]):
+                            data_object = walk_logs["data_types"][i]
+                            is_in = True
+                    if is_in == False:
+                        data_object = "unknown"
+                        walk_logs["data_values"].append(dataset_name)
+                        walk_logs["data_types"].append(data_object)
+                    create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name,
+                                                     keywords_name, data_param_id=i,
+                                                     data_param_name=dataset_name,
+                                                     data_object_value=astunparse.unparse(node.args[0]))
                 elif type(node.func.value).__name__ == "Name":
                     attr_body = walking(node.func.value)
                     is_estiminator = False
@@ -496,7 +558,7 @@ def walking(node):
                             if (dataset_name == condition_switch["now_func_args"][i]):
                                 create_new_funcdef_sequence_node(node.func.attr, physic_operation, estiminator_args,
                                                                  estiminator_keywords, data_param_id=i,
-                                                                  data_param_name=dataset_name)
+                                                                  data_param_name=dataset_name,data_object_value=astunparse.unparse(node.args[0]))
                     else:
                         res = walking(node.func)
                 elif type(node.func.value).__name__ == 'Call':
@@ -557,7 +619,7 @@ def walking(node):
                             if (dataset_name == condition_switch["now_func_args"][i]):
                                 create_new_funcdef_sequence_node(estiminator_name, physic_operation, args_name,
                                                                   keywords_name, data_param_id=i,
-                                                                  data_param_name=dataset_name)
+                                                                  data_param_name=dataset_name,data_object_value=astunparse.unparse(node.args[0]))
                     else:
                         res = walking(node.func)
                         if (type(node.func) != "Name"):
@@ -581,11 +643,31 @@ def walking(node):
                             eval(CONFIG.get('operators', 'operations'))[func_body]['params'][0]]
                     for i in range(0, len(condition_switch["now_func_args"])):
                         if (dataset_name == condition_switch["now_func_args"][i]):
-                            create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_param_id=i, data_param_name=dataset_name)
+                            create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_param_id=i, data_param_name=dataset_name,data_object_value=astunparse.unparse(node.args[0]))
 
                 # *******判断type3*************
                 elif check_operators(func_body, 3):
                     return [func_body,args_name,keywords_name]
+                elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    attr_body = walking(node.func.value)
+                    physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
+                    if(len(node.args) != 0):
+                        dataset_name = walking(node.args[0])
+                    else:
+                        dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                    is_in = False
+                    for i in range(0, len(walk_logs["data_values"])):
+                        if (dataset_name == walk_logs["data_values"][i]):
+                            data_object = walk_logs["data_types"][i]
+                            is_in = True
+                    if is_in == False:
+                        data_object = "unknown"
+                        walk_logs["data_values"].append(dataset_name)
+                        walk_logs["data_types"].append(data_object)
+                    create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
+                                                     data_param_id=i, data_param_name=dataset_name,
+                                                     data_object_value=astunparse.unparse(node.args[0]))
+
                 else:
                     res = walking(node.func)
 
@@ -602,19 +684,68 @@ def walking(node):
                         if len(args_name) != 0:
                             if (args_name[0][1] == 'Str' or args_name[0][1] == 'Num'): # 如果fillna的第一个参数的类型是常数
                                 physic_operation = "filling_constant"
+                    if node.func.attr == 'map':
+                        if type(node.args[0]).__name__ == 'Dict':
+                            dataset_name = walking(node.func.value)
+                            return_list.insert(0, dataset_name)
+                            is_in = False
+                            for i in range(0, len(walk_logs["data_values"])):
+                                if (dataset_name == walk_logs["data_values"][i]):
+                                    data_object = walk_logs["data_types"][i]
+                                    is_in = True
+                            if is_in == False:
+                                data_object = "unknown"
+                                walk_logs["data_values"].append(dataset_name)
+                                walk_logs["data_types"].append(data_object)
+                            create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
+                                                     data_object, astunparse.unparse(node.func))
+                    elif node.func.attr == 'drop':
+                        can_add = 0
+                        if len(node.args) > 1:
+                            if type(node.args[1]).__name__ == 'Num':
+                                if node.args[1].n == 1:  # 如果存在两个参数，且第二个参数为1
+                                    can_add = 1
+                        else:
+                            for key_node in node.keywords:
+                                key = key_node.arg
+                                if key == "axis":
+                                    if type(key_node.value).__name__ == 'Num':
+                                        if key_node.value.n == 1:  # 如果存在两个参数，且第二个参数为1
+                                            can_add = 1
+                                            break
+                                elif key == 'columns':
+                                    can_add = 1
+                                    break
+                                else:
+                                    continue
+                        if can_add == 1:
+                            dataset_name = walking(node.func.value)
+                            return_list.insert(0, dataset_name)
+                            is_in = False
+                            for i in range(0, len(walk_logs["data_values"])):
+                                if (dataset_name == walk_logs["data_values"][i]):
+                                    data_object = walk_logs["data_types"][i]
+                                    is_in = True
+                            if is_in == False:
+                                data_object = "unknown"
+                                walk_logs["data_values"].append(dataset_name)
+                                walk_logs["data_types"].append(data_object)
+                            create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
+                                                     data_object, astunparse.unparse(node.func))
 
-                    dataset_name = walking(node.func.value)
-                    return_list.insert(0, dataset_name)
-                    is_in = False
-                    for i in range(0, len(walk_logs["data_values"])):
-                        if(dataset_name == walk_logs["data_values"][i]):
-                            data_object = walk_logs["data_types"][i]
-                            is_in = True
-                    if is_in == False:
-                        data_object = "unknown"
-                        walk_logs["data_values"].append(dataset_name)
-                        walk_logs["data_types"].append(data_object)
-                    create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object)
+                    else:
+                        dataset_name = walking(node.func.value)
+                        return_list.insert(0, dataset_name)
+                        is_in = False
+                        for i in range(0, len(walk_logs["data_values"])):
+                            if(dataset_name == walk_logs["data_values"][i]):
+                                data_object = walk_logs["data_types"][i]
+                                is_in = True
+                        if is_in == False:
+                            data_object = "unknown"
+                            walk_logs["data_values"].append(dataset_name)
+                            walk_logs["data_types"].append(data_object)
+                        create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object, astunparse.unparse(node.func))
 
                 elif check_operators(node.func.attr, 2):  # 如果命中2操作 pd.dummies
                     attr_body = walking(node.func.value)
@@ -633,8 +764,24 @@ def walking(node):
                             data_object = "unknown"
                             walk_logs["data_values"].append(dataset_name)
                             walk_logs["data_types"].append(data_object)
-                        create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object)
-
+                        create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object, astunparse.unparse(node.args[0]))
+                elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    attr_body = walking(node.func.value)
+                    physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
+                    if(len(node.args) != 0):
+                        dataset_name = walking(node.args[0])
+                    else:
+                        dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                    is_in = False
+                    for i in range(0, len(walk_logs["data_values"])):
+                        if (dataset_name == walk_logs["data_values"][i]):
+                            data_object = walk_logs["data_types"][i]
+                            is_in = True
+                    if is_in == False:
+                        data_object = "unknown"
+                        walk_logs["data_values"].append(dataset_name)
+                        walk_logs["data_types"].append(data_object)
+                    create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object, astunparse.unparse(node.args[0]))
                 elif type(node.func.value).__name__ == "Name": # 如果Attribute的主体是一个名字 这里有分布esitiminator.fit_transform
                     # print("in call attribute name")
                     attr_body = walking(node.func.value)
@@ -651,8 +798,8 @@ def walking(node):
                     if is_estiminator == True and (node.func.attr == 'fit_transform' or node.func.attr == 'transform'):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
-                        else:
-                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[estiminator_name]['params'][0]]
+                        # else:
+                        #     dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[estiminator_name]['params'][0]]
                         is_in = False
                         for i in range(0, len(walk_logs["data_values"])):
                             if (dataset_name == walk_logs["data_values"][i]):
@@ -663,7 +810,7 @@ def walking(node):
                             walk_logs["data_values"].append(dataset_name)
                             walk_logs["data_types"].append(data_object)
                         physic_operation = eval(CONFIG.get('operators', 'operations'))[estiminator_name]["physic_operations"][0]
-                        create_new_sequence_node(estiminator_name, physic_operation, estiminator_args, estiminator_keywords, data_object)
+                        create_new_sequence_node(estiminator_name, physic_operation, estiminator_args, estiminator_keywords, data_object, astunparse.unparse(node.args[0]))
                     else:
                         res = walking(node.func)
                         if(type(node.func) != "Name"):
@@ -737,7 +884,7 @@ def walking(node):
                             walk_logs["data_values"].append(dataset_name)
                             walk_logs["data_types"].append(data_object)
                         physic_operation = eval(CONFIG.get('operators', "operations"))[estiminator_name]["physic_operations"][0]
-                        create_new_sequence_node(estiminator_name, physic_operation, args_name1, keywords_name1, data_object)
+                        create_new_sequence_node(estiminator_name, physic_operation, args_name1, keywords_name1, data_object, astunparse.unparse(node.args[0]))
                     else:
                         res = walking(node.func)
                         if (type(node.func) != "Name"):
@@ -773,11 +920,27 @@ def walking(node):
                         data_object = "unknown"
                         walk_logs["data_values"].append(dataset_name)
                         walk_logs["data_types"].append(data_object)
-                    create_new_sequence_node(func_body, physic_operation, args_name, keywords_name, data_object)
+                    create_new_sequence_node(func_body, physic_operation, args_name, keywords_name, data_object, astunparse.unparse(node.args[0]))
 
                 # *******判断type3*************
                 elif check_operators(func_body, 3):
                     return [func_body, args_name, keywords_name]
+                elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
+                    if(len(node.args) != 0):
+                        dataset_name = walking(node.args[0])
+                    else:
+                        dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                    is_in = False
+                    for i in range(0, len(walk_logs["data_values"])):
+                        if (dataset_name == walk_logs["data_values"][i]):
+                            data_object = walk_logs["data_types"][i]
+                            is_in = True
+                    if is_in == False:
+                        data_object = "unknown"
+                        walk_logs["data_values"].append(dataset_name)
+                        walk_logs["data_types"].append(data_object)
+                    create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name, data_object, astunparse.unparse(node.args[0]))
 
 
         return return_list
@@ -938,14 +1101,14 @@ def single_running(notebook_id, notebook_url, notebook_path, is_save=False, save
         code_txt = get_code_txt(notebook_path + '/' + new_title.lower() + '.ipynb')
     except Exception as e:
         # print('str(Exception):\t', str(e))
-        # print("\033[0;31;40m\tread error\033[0m")
+        print("\033[0;31;40m\tread error\033[0m")
         return "ERROR"
     visitor = CodeVisitor()
     try:
         r_node = ast.parse(code_txt)
     except Exception as e:
-        # print('str(Exception):\t', str(e))
-        # print("\033[0;31;40m\tparse error\033[0m")
+        print('str(Exception):\t', str(e))
+        print("\033[0;31;40m\tparse error\033[0m")
         return "ERROR"
 
     visitor.visit(r_node)
