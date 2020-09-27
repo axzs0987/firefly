@@ -20,21 +20,13 @@ config["models"] = {
         "GradientBoostingRegressor": 11,
         "XGBRegressor": 12,
         "AdaBoostClassifier": 13,
-        ###########################
-        'KNN': 3,
-        'knn': 3,
-        'logic_regression': 2,
-        'linear_regression': 5,
-        'kmeans': 9,
-        'xgb': 12,
-        'ada_boost': 13,
-        'AdaBoost': 13,
     },
     'model_task': [1,1,1,1,2,2,1,1,3,2,2,2,1]
 }
 
 config["database"] = {
-    "host": '10.77.70.123',
+    # "host": '10.77.70.123',
+    "host": '127.0.0.1',
     "user": 'root',
     "passwd": 'mysqlinfo500',
     "dataset": 'kagglenotebook'

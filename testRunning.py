@@ -4,9 +4,15 @@ from compile_notebook.LR_matching import Feeding
 from compile_notebook.LR_matching import LR_run
 from notebook2sequence import single_running
 from utils import get_params_code_by_id
+from utils import CONFIG
+from utils import find_special_notebook
+from utils import get_pair
+from utils import get_compile_fail_pair
+from utils import update_db
+import numpy as np
 import os
-
-
+import re
+import traceback
 
 def get_code_txt(path):
     cot_txt = ""
@@ -35,16 +41,20 @@ def found_dataset(old_path, notebook_id, root_path, origin_code):
     """
 
     old_root_path = ''
-    for index, i in enumerate(old_path.split('/')):
-        if index != len(old_path.split('/')) - 1:
-            old_root_path = old_root_path + i + '/'
-        else:
-            if '.' not in i:
-                old_root_path = old_root_path + i
-            if '/' == old_root_path[-1]:
-                old_root_path = old_root_path[0:-1]
+    if '/' not in old_path:
+        result = root_path + '/' + old_path
+        old_root_path = old_path
+    else:
+        for index, i in enumerate(old_path.split('/')):
+            if index != len(old_path.split('/')) - 1:
+                old_root_path = old_root_path + i + '/'
+            else:
+                if '.' not in i:
+                    old_root_path = old_root_path + i
+                if '/' == old_root_path[-1]:
+                    old_root_path = old_root_path[0:-1]
 
-    result = root_path
+        result = root_path
 
 
 
@@ -54,31 +64,32 @@ def found_dataset(old_path, notebook_id, root_path, origin_code):
     return origin_code.replace(old_root_path, result)
 
 
-def get_pairs(path):
-    """
-    :param path:
-    :return:
-    暂时使用的函数，pair数据库建起来之前，使用pair.txt找对应关系
-    """
-    notebook_name_list = []
-    dataset_name_list = []
-    with open(path) as f:
-        for line in f:
-            line_list = line.split(']')
-            notebook_name = line_list[0].split('/')[-1]
-            dataset_name = line_list[1].split('/')[-1][0:-1]
-            notebook_name_list.append(notebook_name)
-            dataset_name_list.append(dataset_name)
+# def get_pairs(path):
+#     """
+#     :param path:
+#     :return:
+#     暂时使用的函数，pair数据库建起来之前，使用pair.txt找对应关系
+#     """
+#     notebook_name_list = []
+#     dataset_name_list = []
+#     with open(path) as f:
+#         for line in f:
+#             line_list = line.split(']')
+#             notebook_name = line_list[0].split('/')[-1]
+#             dataset_name = line_list[1].split('/')[-1][0:-1]
+#             notebook_name_list.append(notebook_name)
+#             dataset_name_list.append(dataset_name)
+#
+#     return notebook_name_list, dataset_name_list
 
-    return notebook_name_list, dataset_name_list
-
-def insert_one_line_in_code(origin_code, under_line, target_line, is_same = True):
+def insert_one_line_in_code(origin_code, under_line, target_line, is_same = True, up_down = 'down'):
     """
     :param origin_code: 原本代码
     :param under_line: 目标插入的位置，int，就是第几行（从0开始），string就是在匹配到包含此字符串的行的下面都插入
     :param target_line: 目标插入代码
     :return: 转换后的代码
     """
+    # print('?')
     def get_space_num(line):
         count = 0
         for char in line:
@@ -86,6 +97,9 @@ def insert_one_line_in_code(origin_code, under_line, target_line, is_same = True
                 count += 1
             else:
                 break
+        # print(line[count+1:count+3])
+        if line[count:count+3] == 'if ' and ':' in line or line[count:count+4] == 'for ' and ':' or line[count:count+6] == 'while ' and ':' or line[count:count+4] == 'def ' and ':':
+            count += 4
         return count
 
     def add_space(line, count):
@@ -107,11 +121,14 @@ def insert_one_line_in_code(origin_code, under_line, target_line, is_same = True
         for index,line in enumerate(code_list):
             if under_line in line:
                 index_list.append(index)
-            print(index, line)
+            # print(index, line)
         for index in range(0, len(index_list)):
             if is_same == True:
                 target = converse_target(code_list[index_list[index]-1] , target_line)
-            code_list.insert(index_list[index], target)
+            if up_down == 'down':
+                code_list.insert(index_list[index], target)
+            if up_down == 'up':
+                code_list.insert(index_list[index]-1, target)
             if index != len(index_list)-1:
                 for after_index in range(index + 1, len(index_list)):
                     index_list[after_index] += 1
@@ -182,12 +199,13 @@ def print_readcsv(origin_code):
     code_list = origin_code.split('\n')
     code_list.append("print(column_name)")
     result = ''
+
     for i in code_list:
         result = result + i + '\n'
     return result,len(csv_varible)
 
 
-def running(func_def, new_path,count):
+def running(func_def, new_path,count, found=False):
     """
     :param func_def: 需要运行的代码字符串
     :param new_path: 替换路径
@@ -199,44 +217,68 @@ def running(func_def, new_path,count):
         cm = compile(func_def, '<string>', 'exec')
     except Exception as e:
         print("compile fail", e)
+        return "compile fail"
     print("\033[0;33;40m" + str(count) +"\033[0m")
     can_run = False
     try:
-        print(func_def)
         ns = {}
         exec(cm,ns)
         print("\033[0;32;40msucceed\033[0m")
         can_run = True
     except Exception as e:
+        traceback.print_exc()
         error_str = str(e)
-        print("\033[0;31;40merror_str\033[0m", error_str)
+        new_code = func_def
+        foun = 0
+        # print("\033[0;31;40merror_str\033[0m", error_str)
         if "[Errno 2] No such file or directory: " in error_str:
             error_path = error_str.replace("[Errno 2] No such file or directory: " , "")
             error_path = error_path[1:-1]
             new_code = found_dataset(error_path, 1, new_path, func_def)
-            print('error_path:', error_path)
+            # print('error_path:', error_path)
+            foun=1
             # running(new_code)
         elif "does not exist:" in error_str and '[Errno 2] File ' in error_str:
             error_path = error_str.split(':')[-1].strip()
             error_path = error_path[1:-1]
             new_code = found_dataset(error_path, 1, new_path, func_def)
-            print('error_path:', error_path)
-            print('new_code:', new_code)
-        elif "No module named " in error_str:
+            # print('error_path:', error_path)
+            # print('new_code:', new_code)
+            foun=1
+        elif "No module named " in error_str and '_tkinter' not in error_str:
             package = error_str.replace("No module named ", "")
             package = package[1:-1]
-            command = ' pip install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
+            command = ' pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
             os.system(command)
         elif  ": No such file or directory" in error_str:
             index1 = error_str.find("'")
             index2 = error_str.find("'", index1+1)
-            error_path = error_str.substr(index1+1,index2)
+            error_path = error_str[index1+1:index2]
             new_code = found_dataset(error_path, 1, new_path, func_def)
-            print('error_path:', error_path)
-        if count < 4 and can_run==False:
+            # print('error_path:', error_path)
+        elif "Command '['ls'," in error_str:
+            index1 = error_str.find('ls')
+            # print(index1)
+            el_line = error_str[index1+6:]
+            # print(el_line)
+            right_index  = el_line.find('\'')
+            error_path = el_line[0:right_index]
+            # print('error_path:', error_path)
+            new_code = found_dataset(error_path, 1, new_path, func_def)
+            # print('new_code:', new_code)
+            foun = 1
+        else:
+            # print("?")
+            traceback.print_exc()
+            print("\033[0;31;40merror_str\033[0m", error_str)
+            return "False"
+        if count < 2 and can_run==False and found==False:
             # print(new_code)
-            res = running(new_code, new_path, count + 1)
+            if foun ==1:
+                found = True
+            res = running(new_code, new_path, count + 1,found)
             return res
+
     return func_def
 
 def add_variable_code(origin_code, variable_list,notebook_name, save_root="../strcol"):
@@ -281,7 +323,7 @@ def compare_dataframe(new_df, column_list, save_path, origin_data_0=[]):
                 col_path = column.replace('/','_')
             if os.path.exists(save_path + '/' + col_path) == False:
                 os.mkdir(save_path + '/' + col_path)
-            new_df[column].to_csv(save_path + '/' + col_path + '/' + str(new_count[column]) + '.csv')
+            new_df[column].to_csv(save_path + '/' + col_path + '/' + str(new_count[column]) + '.csv',encoding='gbk')
             now_df[column] = new_df[column]
             new_count[column] += 1
         elif type(new_df).__name__ == 'Series':
@@ -396,34 +438,867 @@ def compare_dataframe(new_df, column_list, save_path, origin_data_0=[]):
 
     return origin_code
 
-def add_params(id, notebook_name,notebook_root, dataset_name, dataset_root):
+def add_params_miresult(notebook_id, origin_code, save_root_path="../midresult"):
+    func_def = ''
+    func_def += "from utils import update_params_value\n"
+    func_def += "import pandas as pd\n"
+    func_def += "import os\n"
+    func_def += "def insert_params(rank, param_num, content):\n"
+    func_def += "    notebook_id = " + str(notebook_id) + '\n'
+    func_def += "    update_params_value(notebook_id, rank, param_num, content)\n"
+    func_def += "def insert_miresult(rank, content, root_path):\n"
+    func_def += "    notebook_id = " + str(notebook_id) + '\n'
+    func_def += "    if os.path.exists(root_path) == False:\n"
+    func_def += "        os.mkdir(root_path)\n"
+    func_def += "    if os.path.exists(root_path + '/' + str(notebook_id)) == False:\n"
+    func_def += "        os.mkdir(root_path + '/' + str(notebook_id))\n"
+    func_def += "    if type(content).__name__ == 'numpy.ndarray':\n"
+    func_def += "        np.save(root_path + '/' + str(notebook_id) + '/' + str(rank) + '.csv', content)\n"
+    func_def += "    elif type(content).__name__ == 'DataFrame' or type(content).__name__ == 'Series':\n"
+    func_def += "        content.to_csv(root_path + '/' + str(notebook_id) + '/' + str(rank) + '.csv')\n"
+    param_code_list = get_params_code_by_id(notebook_id)
+    line = 0
+    origin_code = func_def + origin_code
+    while (line < len(origin_code.split('\n'))):
+        code_list = origin_code.split('\n')
+        if code_list[line] == None:
+            line+=1
+            continue
+        for index, i in enumerate(param_code_list):
+            # print(i['name'] + '(' + i['p1'])
+            item = i['p1']
+            co = 1
+            while item == None:
+                co += 1
+                if co == 8:
+                    break
+                item = i['p'+str(co)]
+            if item == None:
+                item = ''
 
-    walk_logs = single_running(1, notebook_name.split('.')[0], notebook_root)
-    param_code_list = get_params_code_by_id(id)
+            # print(i)
+            if i['name'] + '(' + item.replace(' ','') in code_list[line].replace(' ','') and i['data_object_value'] in code_list:
+                for j in i.keys():
+                    if 'p' not in j:
+                        continue
+                    number = j[-1]
+                    if i[j] == None:
+                        continue
+                    con = i[j]
+                    if '=' in i[j]:
+                        con = i[j].split('=')[-1].strip()
+                    need2print = 'insert_params(' + str(i['rank']) + ',' + str(number) + ',' + con + ')'
 
-    notebook_path = notebook_root + '/' + notebook_name
-    dataset_path_root = dataset_root + '/' + dataset_name
-    func_def = get_code_txt(notebook_path)
+                    line += 1
+                    origin_code = insert_one_line_in_code(origin_code, line, need2print)
 
-    code_list = func_def.split('\n')
+                need2print = 'insert_miresult(' +  str(i['rank']) + ',' +  i['data_object_value'].split('.')[0] + ',"' + save_root_path +'")'
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                break
+        line += 1
+    return origin_code
 
-    code_index = 0
-    now_insert_num = 0
-    for index, i in range(param_code_list):
-        if i['name'] + '(' + i['p1'] in code_list[code_index] or i['name'] + '( ' + i['p1'] in code_list[code_index]:
-            #找到operaotr对应的行了 A=LabelEncoder()
-            parameter_code = code_list[code_index].substr[code_list[code_index].find(i['name']+'(') + len(i['name']):]
-            parameter_lis_str = parameter_code[0:parameter_code.find(')')]
-            parameter_value_list = parameter_lis_str.split(',')
-            ind = 0
-            for param_value in parameter_value_list:
-                code_list.insert(code_index + ind + 1, "insert_param_db(notebook_id, " + str(ind+1) + "," + param_value + ")")
-                ind+=1
-
-            insert_one_line_in_code(code_index + ind + 1, "save_middle_df(notebook_id, " + str(i['rank']) + "," + i['data_object_value'] + ")")
+def add_result(notebook_id, origin_code, walk_logs_path = "../walklogs"):
+    func_def = ''
+    func_def += "from utils import add_result\n"
+    func_def += "def insert_result(type, content, code, model_type):\n"
+    func_def += "    notebook_id = " + str(notebook_id) + '\n'
+    func_def += "    add_result(notebook_id, type, content, code, model_type)\n"
 
 
+    this_walk_logs = np.load(walk_logs_path + '/' + str(notebook_id) + '.npy',allow_pickle=True).item()
+    origin_code = func_def + origin_code
 
+    model_dic  = eval(CONFIG.get('models', 'model_dic'))
+    model_result_log = {}
+
+    line = 0
+    model_pred = this_walk_logs['models_pred']
+
+    while(line < len(origin_code.split('\n'))):
+        code_list = origin_code.split('\n')
+        code = code_list[line]
+        # print(code)
+        if '.score(' in code:
+            index = code.find('.score(')
+            head = index - 1
+            # print("index:",index)
+            while code[head].isalpha() or code[head] == '_' \
+                    or code[head] == '[' or code[head] == ']' \
+                    or code[head] == '\'' or code[head] == '\"' \
+                    or code[head].isalnum():
+                if code[head] == ']':
+                    while code[head] != '[':
+                        head-=1
+                else:
+                    head -= 1
+            # print("head:", head)
+            left_index =  index + 6
+            left_num = 1
+            # print("left_index:", left_index)
+            right_index = 0
+            for ind in range(left_index + 1, len(code)):
+                if code[ind] == '(':
+                    left_num += 1
+                elif code[ind] == ')':
+                    left_num -= 1
+                if left_num == 0:
+                    right_index = ind
+                    break
+            # print("right_index:", right_index)
+            model_id = -1
+            for item in model_pred:
+                if model_pred[item] in code:
+                    model_id = model_dic[item]
+                elif item in code:
+                    model_id = model_dic[item]
+            # print(code[head+1:right_index + 1])
+            temp_code = code
+            temp_code = temp_code.replace(' ','')
+            temp_code = temp_code.replace('\t', '')
+            temp_code = temp_code.replace('\'', '\\\'')
+            temp_code = temp_code.replace('"', '\\"')
+            need2print = "insert_result(" + str(model_id) + "," + code[head+1:right_index + 1] +',"' + temp_code + '", "score")'
+            # print(need2print)
+            line += 1
+            origin_code = insert_one_line_in_code(origin_code, line, need2print)
+            # param = code[left_index:right_index+1]
+
+            # if 'score' not in model_result_log:
+            #     model_result_log['score'] = []
+            #
+            # if param not in model_result_log['score']:
+            #     line += 1
+            #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+            #     model_result_log['score'].append(param)
+        elif 'best_score_' in code:
+            index = code.find('best_score_')
+            head = index - 2
+            print("index:",index)
+            print(code)
+            while code[head].isalpha() or code[head] == '_' \
+                    or code[head] == '[' or code[head] == ']' \
+                    or code[head] == '\'' or code[head] == '\"' \
+                    or code[head].isalnum():
+                if code[head] == ']':
+                    while code[head] != '[':
+                        head-=1
+                else:
+                    head -= 1
+            print('head:', head)
+            right_index = index + 10
+            # left_index
+            # print("head:", head)
+            # left_index =  index + 6
+            # left_num = 1
+            # # print("left_index:", left_index)
+            # right_index = 0
+            # for ind in range(left_index + 1, len(code)):
+            #     if code[ind] == '(':
+            #         left_num += 1
+            #     elif code[ind] == ')':
+            #         left_num -= 1
+            #     if left_num == 0:
+            #         right_index = ind
+            #         break
+            # print("right_index:", right_index)
+            model_id = -1
+            for item in model_pred:
+                if model_pred[item] in code:
+                    model_id = model_dic[item]
+                elif item in code:
+                    model_id = model_dic[item]
+
+            # print(code[head+1:right_index + 1])
+            temp_code = code
+            temp_code = temp_code.replace(' ','')
+            temp_code = temp_code.replace('\t', '')
+            temp_code = temp_code.replace('\'', '\\\'')
+            temp_code = temp_code.replace('"', '\\"')
+            need2print = "insert_result(" + str(model_id) + "," + code[head+1:right_index + 1] +',"' + temp_code + '", "best_score_")'
+
+            line += 1
+            origin_code = insert_one_line_in_code(origin_code, line, need2print)
+        elif 'accuracy_score(' in code:
+            index = code.find('accuracy_score(')
+            if index == 0:
+                head = index
+                left_index = index  + 14
+                left_num = 1
+
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+
+                temp_code = code
+                temp_code = temp_code.replace(' ','')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[head:right_index + 1] + ',"' + temp_code + '", "accuracy_score")'
+                param = code[left_index :right_index + 1]
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # if 'accuracy_score' not in model_result_log:
+                #     model_result_log['accuracy_score'] = []
+                #
+                # if param not in model_result_log['accuracy_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['accuracy_score'].append(param)
+            elif code[index-1] != '.':
+                if code[index -1].isalpha() or code[index-1] == '_' \
+                        or code[index-1].isalnum():
+                    line += 1
+                    continue
+                head = index
+                left_index = index + 14
+                left_num = 1
+
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head:right_index + 1] + ',"' + temp_code + '", "accuracy_score")'
+
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+
+            else:
+                head = index - 2
+                # print("index:",index)
+                while code[head].isalpha() or code[head] == '_' \
+                        or code[head] == '[' or code[head] == ']' \
+                        or code[head] == '\'' or code[head] == '\"' \
+                        or code[head].isalnum():
+                    if code[head] == ']':
+                        while code[head] != '[':
+                            head -= 1
+                    else:
+                        head -= 1
+                left_index = index + 14
+                left_num = 1
+
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head+1:right_index + 1] + ',"' + temp_code + '", "accuracy_score")'
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+
+
+        elif 'auc(' in code:
+            index = code.find('auc(')
+            if index == 0:
+                head = index
+                left_index = index + 3
+                # print("left_index:", left_index)
+                left_num = 1
+
+
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ','')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[head:right_index + 1] + ',\'' + temp_code + '\', "auc")'
+                # print(need2print)
+                param = code[left_index :right_index + 1]
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # if 'auc' not in model_result_log:
+                #     model_result_log['auc'] = []
+                #
+                # if param not in model_result_log['auc']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['auc'].append(param)
+            elif code[index-1]!='.':
+                if code[index -1].isalpha() or code[index-1] == '_' \
+                        or code[index-1].isalnum():
+                    line += 1
+                    continue
+                head = index - 2
+                left_index = index + 3
+                # print("left_index:", left_index)
+                left_num = 1
+
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head + 1:right_index + 1] + ',\'' + temp_code + '\', "auc")'
+                # print(need2print)
+                param = code[left_index:right_index + 1]
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+            else:
+                head = index - 2
+                while code[head].isalpha() or code[head] == '_' \
+                        or code[head] == '[' or code[head] == ']' \
+                        or code[head] == '\'' or code[head] == '\"' \
+                        or code[head].isalnum():
+                    if code[head] == ']':
+                        while code[head] != '[':
+                            head -= 1
+                    else:
+                        head -= 1
+
+                left_index = index + 3
+                # print("left_index:", left_index)
+                left_num = 1
+
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head + 1:right_index + 1] + ',\'' + temp_code + '\', "auc")'
+                # print(need2print)
+                param = code[left_index:right_index + 1]
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+        elif 'f1_score(' in code:
+            index = code.find('f1_score(')
+            if index == 0:
+                head = index
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ','')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[head:right_index + 1] + ',\'' + temp_code + '\', "auc")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index :right_index + 1]
+                # if 'f1_score' not in model_result_log:
+                #     model_result_log['f1_score'] = []
+                #
+                # if param not in model_result_log['f1_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['f1_score'].append(param)
+            elif code[index-1] != '.':
+                if code[index -1].isalpha() or code[index-1] == '_' \
+                        or code[index-1].isalnum():
+                    line += 1
+                    continue
+                head = index
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head :right_index + 1] + ',\'' + temp_code + '\', "auc")'
+                # print(need2print)
+                # param = code[left_index:right_index + 1]
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # if 'f1_score' not in model_result_log:
+                #     model_result_log['f1_score'] = []
+                #
+                # if param not in model_result_log['f1_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['f1_score'].append(param)
+            else:
+                head = index - 2
+                # print("index:",index)
+                while code[head].isalpha() or code[head] == '_' \
+                        or code[head] == '[' or code[head] == ']' \
+                        or code[head] == '\'' or code[head] == '\"' \
+                        or code[head].isalnum():
+                    if code[head] == ']':
+                        while code[head] != '[':
+                            head -= 1
+                    else:
+                        head -= 1
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head + 1:right_index + 1] + ',\'' + temp_code + '\', "f1_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'f1_score' not in model_result_log:
+                #     model_result_log['f1_score'] = []
+                #
+                # if param not in model_result_log['f1_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['f1_score'].append(param)
+        elif 'r2_score(' in code:
+            index = code.find('r2_score(')
+            if index == 0:
+                head = index
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head:right_index + 1] + ',\'' + temp_code + '\', "r2_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'r2_score' not in model_result_log:
+                #     model_result_log['r2_score'] = []
+                #
+                # if param not in model_result_log['r2_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['r2_score'].append(param)
+            elif code[index - 1] != '.':
+                if code[index -1].isalpha() or code[index-1] == '_' \
+                        or code[index-1].isalnum():
+                    line += 1
+                    continue
+                head = index
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head:right_index + 1] + ',\'' + temp_code + '\', "r2_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'r2_score' not in model_result_log:
+                #     model_result_log['r2_score'] = []
+                #
+                # if param not in model_result_log['r2_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['r2_score'].append(param)
+            else:
+                head = index - 2
+                # print("index:",index)
+                left_index = index + 8
+                # print("left_index:", left_index)
+                left_num = 1
+                while code[head].isalpha() or code[head] == '_' \
+                        or code[head] == '[' or code[head] == ']' \
+                        or code[head] == '\'' or code[head] == '\"' \
+                        or code[head].isalnum():
+                    if code[head] == ']':
+                        while code[head] != '[':
+                            head -= 1
+                    else:
+                        head -= 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head + 1:right_index + 1] + ',\'' + temp_code + '\', "r2_score")'
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # print(need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'r2_score' not in model_result_log:
+                #     model_result_log['r2_score'] = []
+                #
+                # if param not in model_result_log['r2_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['r2_score'].append(param)
+        elif 'cross_val_score(' in code:
+            index = code.find('cross_val_score(')
+            if index == 0:
+                head = index
+                # print("index:",index)
+                left_index = index + 15
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head:right_index + 1]+'.mean()' + ',\'' + temp_code + '\', "cross_val_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'cross_val_score' not in model_result_log:
+                #     model_result_log['cross_val_score'] = []
+                #
+                # if param not in model_result_log['cross_val_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['cross_val_score'].append(param)
+            elif code[index - 1] != '.':
+                if code[index -1].isalpha() or code[index-1] == '_' \
+                        or code[index-1].isalnum():
+                    line += 1
+                    continue
+                head = index
+                # print("index:",index)
+                left_index = index + 15
+                # print("left_index:", left_index)
+                left_num = 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[head:right_index + 1]+'.mean()' + ',\'' + temp_code + '\', "cross_val_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'cross_val_score' not in model_result_log:
+                #     model_result_log['cross_val_score'] = []
+                #
+                # if param not in model_result_log['cross_val_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['cross_val_score'].append(param)
+            else:
+                head = index -2
+                # print("index:",index)
+                left_index = index + 15
+                # print("left_index:", left_index)
+                left_num = 1
+                while code[head].isalpha() or code[head] == '_' \
+                        or code[head] == '[' or code[head] == ']' \
+                        or code[head] == '\'' or code[head] == '\"' \
+                        or code[head].isalnum():
+                    if code[head] == ']':
+                        while code[head] != '[':
+                            head -= 1
+                    else:
+                        head -= 1
+                right_index = 0
+                for ind in range(left_index + 1, len(code)):
+                    if code[ind] == '(':
+                        left_num += 1
+                    elif code[ind] == ')':
+                        left_num -= 1
+                    if left_num == 0:
+                        right_index = ind
+                        break
+                # print("right_index:", right_index)
+                model_id = -1
+                for item in model_pred:
+                    if model_pred[item] in code:
+                        model_id = model_dic[item]
+                    elif item in code:
+                        model_id = model_dic[item]
+
+                temp_code = code
+                temp_code = temp_code.replace(' ', '')
+                temp_code = temp_code.replace('\t', '')
+                temp_code = temp_code.replace('\'', '\\\'')
+                temp_code = temp_code.replace('"', '\\"')
+                need2print = "insert_result(" + str(model_id) + "," + code[
+                                                                      head + 1:right_index + 1]+'.mean()' + ',\'' + temp_code + '\', "cross_val_score")'
+                # print(need2print)
+                line += 1
+                origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                # param = code[left_index:right_index + 1]
+                # if 'cross_val_score' not in model_result_log:
+                #     model_result_log['cross_val_score'] = []
+                #
+                # if param not in model_result_log['cross_val_score']:
+                #     line += 1
+                #     origin_code = insert_one_line_in_code(origin_code, line, need2print)
+                #     model_result_log['cross_val_score'].append(param)
+        line += 1
+    # print(origin_code)
+    return origin_code
+
+        # if '.score(' in code:
+        #     # model = check_model(code)
+        #     # index[count] = (model,1)
+        #     print("score:",code)
+        # elif 'accuracy_score(' in code:
+        #     # model = check_model(code)
+        #     # index[count] = (model,1)
+        #     print("accuracy_score:",code)
+        # else:
+        #     print(code)
+def check_no_model(root_path = "../notebook"):
+    no_model_notebook_id_list = find_special_notebook()
+    model_dic = model_dic = eval(CONFIG.get('models', 'model_dic'))
+    for id in no_model_notebook_id_list:
+        origin_code = get_code_txt(root_path + '/' + str(id) + '.ipynb')
+        for model_name in model_dic:
+            if model_name + '(' in origin_code:
+                print(str(id)+ ":found model!", model_name)
 
 def test_running(notebook_root, dataset_root, notebook_name, dataset_name):
     """
@@ -455,24 +1330,72 @@ def test_running(notebook_root, dataset_root, notebook_name, dataset_name):
     add_varible_code_content = add_variable_code(add_csv_code, varible_list,notebook_name.split('.')[0])
     can_run_code = running(add_varible_code_content, dataset_path_root, 0)
 
-def batch_running(notebook_root,dataset_root,pair_path):
-    notebook_name_list, dataset_name_list = get_pairs(pair_path)
-    for i in range(0,len(notebook_name_list)):
-        try:
-            notebook_name = notebook_name_list[i]
-            dataset_name =  dataset_name_list[i]
+def single_runnings(notebook_id, dataset_name ,notebook_root="../notebook",dataset_root="../dataset"):
+    dataset_path_root = dataset_root + '/' + dataset_name + '.zip'
+    try:
+        origin_code = get_code_txt(notebook_root + '/' + str(notebook_id) + '.ipynb')
+    except:
+        print("\033[0;31;read fail\033[0m")
+        return "read fail"
+
+    add_code = add_result(notebook_id, origin_code)
+    add_code = add_params_miresult(notebook_id, add_code)
+
+    add_code = add_code.replace('from sklearn.preprocessing import Imputer', 'from sklearn.impute import SimpleImputer')
+    add_code = add_code.replace('from sklearn.preprocessing import SimpleImputer', 'from sklearn.impute import SimpleImputer')
+    add_code = add_code.replace('from sklearn.externals import joblib','import joblib')
+    add_code = add_code.replace('pandas.tools', 'pandas')
+    add_code = insert_one_line_in_code(add_code,'import matplotlib.pyplot as plt','matplotlib.use("agg")\n')
+    add_code = insert_one_line_in_code(add_code, 'from matplotlib import pyplot as plt', 'matplotlib.use("agg")\n')
+    add_code = insert_one_line_in_code(add_code, 'import seaborn', 'matplotlib.use("agg")\n')
+    add_code = insert_one_line_in_code(add_code, 'from seaborn import', 'matplotlib.use("agg")\n')
+    add_code = insert_one_line_in_code(add_code, 'matplotlib.use("agg")', 'import matplotlib\n')
+    for index,i in enumerate(add_code.split('\n')):
+        print(index, i)
+
+    can_run_code = running(add_code,dataset_path_root,0)
+    if can_run_code == "compile fail":
+        print("\033[0;31;40mcompile fail\033[0m")
+        return "compile fail"
+    if can_run_code == 'False':
+        return "False"
+    return 'succeed'
+
+
+
+def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.99.150.216"):
+    pairs = get_compile_fail_pair(ip)
+    print(len(pairs))
+    count = 0
+    for pair in pairs:
+        # try:
+        # print(pair[0])
+        # print(type(pair[0]).__name__)
+        if count == 8:
+        # if pair[0] == '114886':
+        #     print("///")
+            notebook_id = pair[0]
+            dataset_name = pair[1]
 
             # if notebook_name == "most-dangerous-departure-and-destination-cities.ipynb":
-            print("\033[0;31;44m" + notebook_name + "\033[0m")
-            test_running(notebook_root, dataset_root, notebook_name, dataset_name)
-            # print("\033[0;32;40m\tsucceed\033[0m")
-        except:
-            continue
-            print("\033[0;31;40m\terror\033[0m")
+
+            print("\033[0;33;44m" + str(notebook_id) + "\033[0m")
+            res = single_runnings(notebook_id, dataset_name, notebook_root, dataset_root)
+
+            if res != 'False' and res != 'compile fail' and res != 'read fail':
+                update_db("notebook", "add_run", '1', 'id', '=', notebook_id)
+        #     if res == 'compile fail':
+        #         update_db("notebook", "add_run", '2', 'id', '=', notebook_id)
+        #     if res == 'False':
+        #         update_db("notebook", "add_run", '3', 'id', '=', notebook_id)
+        #     if res == 'read fail':
+        #         update_db("notebook", "add_run", '0', 'id', '=', notebook_id)
+        count += 1
+        #
+
 
 
 
 if __name__ == '__main__':
-    batch_running("../spider/notebook", '../spider/unzip_dataset', '../spider/pair.txt')
-
-
+    batch_running(notebook_root="../spider/notebook",dataset_root="../spider/unzip_dataset")
+    # check_no_model()
