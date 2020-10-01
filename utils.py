@@ -9,6 +9,11 @@ import pymysql
 import numpy as np
 import pandas as pd
 import os
+
+
+import paramiko  # 用于调用scp命令
+from scp import SCPClient
+
 import sys
 
 CONFIG = configparser.ConfigParser()
@@ -113,9 +118,14 @@ def insert_db(table, column_list, value_list):
 
 def update_db(table, old_column, new_value, condition_column, compare_operator, condition_value):
     cursor, db = create_connection()
-    new_value = new_value.replace("'", "\\'")
-    new_value = new_value.replace('"', '\\"')
-    sql = "UPDATE " + table + " SET " + old_column + " = " + new_value.replace("'", "\\'") + " WHERE " + condition_column + compare_operator + condition_value
+    if type(new_value).__name__ == 'str':
+        new_value = new_value.replace("'", "\\'")
+        new_value = new_value.replace('"', '\\"')
+    if type(condition_value).__name__ == 'str':
+        condition_value = condition_value.replace("'", "\\'")
+        condition_value = condition_value.replace('"', '\\"')
+
+    sql = "UPDATE " + table + " SET " + old_column + " = " + str(new_value) + " WHERE " + condition_column + compare_operator + str(condition_value)
     print(sql)
     try:
         cursor.execute(sql)
@@ -201,12 +211,19 @@ def update_params_value(notebook_id, rank, param_num, content):
 
 
 
-def add_result(notebook_id, type, content, code, metric_type):
+def add_result(notebook_id, score_type, content, code, metric_type):
     global CONFIG
-    value_list = [notebook_id, type, content, code, metric_type]
-    column_list = ["notebook_id", "model_type", "content", "code", "metric_type"]
-    print("\033[0;33;43madd result\033[0m")
-    return insert_db("result", column_list, value_list)
+    # print('zdfsd:',type(content))
+    if 'int' in type(content).__name__ or 'float' in type(content).__name__:
+        value_list = [notebook_id, score_type, content, code, metric_type]
+        column_list = ["notebook_id", "model_type", "content", "code", "metric_type"]
+        print("\033[0;33;43madd result\033[0m")
+        return insert_db("result", column_list, value_list)
+    else:
+        value_list = [notebook_id, score_type, str(content), code, metric_type]
+        column_list = ["notebook_id", "model_type", "str_content", "code", "metric_type"]
+        print("\033[0;33;43madd result\033[0m")
+        return insert_db("result", column_list, value_list)
     # else:
     #     return "ALREADY EXIST"
 
@@ -285,11 +302,6 @@ def add_sequence_from_walk_logs(walk_logs, save_path):
         return res1
     count = 1
 
-    if len(walk_logs['operator_sequence'])==0:
-        update_db("notebook", "cant_sequence", '2', "id", '=', str(walk_logs["notebook_id"]))
-        print("\033[0;33;40m\tsequence length is 0\033[0m")
-        return
-
     for operator_node in walk_logs['operator_sequence']:
         res2 = add_operator(notebook_id, count, operator_node["data_object"],operator_node["data_object_value"], operator_node["operator_name"], operator_node['physic_operation'], operator_node['parameter_code'], operator_node['parameter_type'])
         count += 1
@@ -298,6 +310,10 @@ def add_sequence_from_walk_logs(walk_logs, save_path):
 
     np.save(save_path + '/' + str(walk_logs['notebook_id']) + '.npy', walk_logs)
     res3 = update_db("notebook", "add_sequence", '1', 'id', "=", str(walk_logs["notebook_id"]))
+    if len(walk_logs['operator_sequence'])==0:
+        update_db("notebook", "cant_sequence", '2', "id", '=', str(walk_logs["notebook_id"]))
+        print("\033[0;33;40m\tsequence length is 0\033[0m")
+        # return
     if res3 == 'ERROR':
         return res2
 
@@ -315,9 +331,12 @@ def get_batch_no_seq_notebook_info(ip):
         result.append(notebook_info)
     return result
 
-def get_batch_notebook_info(ip):
+def get_batch_notebook_info(ip,type=1):
     cursor, db = create_connection()
-    sql = "SELECT distinct title, id, scriptUrl FROM notebook WHERE add_sequence=0 and (cant_sequence=0 or cant_sequence=3) and isdownload=1 and server_ip='" + ip + "'"
+    if type==1:
+        sql = "SELECT distinct title, id, scriptUrl FROM notebook WHERE add_sequence=0 and (cant_sequence=0 or cant_sequence=3) and isdownload=1 and server_ip='" + ip + "'"
+    elif type==2:
+        sql = "SELECT distinct title, id, scriptUrl FROM notebook WHERE add_sequence=0 and cant_sequence=2 and isdownload=1 and server_ip='" + ip + "'"
     cursor.execute(sql)
     sql_res = cursor.fetchall()
     result = []
@@ -337,18 +356,61 @@ def found_dataset(old_path, notebook_id, root_path, origin_code):
     print("result", result)
     return origin_code.replace(old_path, result)
 
-def get_pair(ip):
+def get_pair(ip, type=1):
+
     cursor, db = create_connection()
-    sql = "SELECT pair.nid, dataset.dataSourceUrl " \
+    if type == 0:
+        sql = "SELECT pair.nid, dataset.dataSourceUrl " \
           "FROM pair, notebook, dataset " \
           "WHERE notebook.id=pair.nid " \
           "and dataset.id=pair.did " \
-          "and notebook.add_sequence=1 " \
-          "and notebook.add_run=1 " \
+          "and (notebook.add_sequence=1 or notebook.add_sequence=0 and (notebook.cant_sequence=2 or notebook.cant_sequence=3))" \
+          "and notebook.add_run=0 " \
           "and notebook.server_ip='" + ip + "' " \
           "and dataset.isdownload=1 " \
-          "and dataset.server_ip='" + ip + "' " \
-          "and notebook.id not in (select distinct notebook_id from result)"
+          "and dataset.server_ip='" + ip + "' "
+    if type == 2:
+        sql = "SELECT pair.nid, dataset.dataSourceUrl " \
+          "FROM pair, notebook, dataset " \
+          "WHERE notebook.id=pair.nid " \
+          "and dataset.id=pair.did " \
+          "and (notebook.add_sequence=1 or notebook.add_sequence=0 and (notebook.cant_sequence=2 or notebook.cant_sequence=3))" \
+          "and notebook.add_run=2 " \
+          "and notebook.server_ip='" + ip + "' " \
+          "and dataset.isdownload=1 " \
+          "and dataset.server_ip='" + ip + "' "
+    elif type == 1:
+        sql = "SELECT pair.nid, dataset.dataSourceUrl " \
+              "FROM pair, notebook, dataset " \
+              "WHERE notebook.id=pair.nid " \
+              "and dataset.id=pair.did " \
+              "and (notebook.add_sequence=1 or notebook.add_sequence=0 and (notebook.cant_sequence=2 or notebook.cant_sequence=3))" \
+              "and notebook.add_run=1 " \
+              "and notebook.server_ip='" + ip + "' " \
+              "and dataset.isdownload=1 " \
+              "and dataset.server_ip='" + ip + "' " \
+              "and notebook.id not in (select distinct notebook_id from result)"
+    elif type == 3:
+        sql = "SELECT pair.nid, dataset.dataSourceUrl " \
+              "FROM pair, notebook, dataset " \
+              "WHERE notebook.id=pair.nid " \
+              "and dataset.id=pair.did " \
+              "and notebook.add_run=3 " \
+              "and (notebook.add_sequence=1 or notebook.add_sequence=0 and (notebook.cant_sequence=2 or notebook.cant_sequence=3)) " \
+              "and notebook.server_ip='" + ip + "' " \
+              "and dataset.isdownload=1 " \
+              "and dataset.server_ip='" + ip + "' " \
+              "and notebook.id not in (select distinct notebook_id from result)"
+    elif type == 4:
+        sql = "SELECT pair.nid, dataset.dataSourceUrl " \
+              "FROM pair, notebook, dataset " \
+              "WHERE notebook.id=pair.nid " \
+              "and dataset.id=pair.did " \
+              "and notebook.add_run=4 " \
+              "and (notebook.add_sequence=1 or notebook.add_sequence=0 and (notebook.cant_sequence=2 or notebook.cant_sequence=3)) " \
+              "and notebook.server_ip='" + ip + "' " \
+              "and dataset.isdownload=1 " \
+              "and dataset.server_ip='" + ip + "'"
     cursor.execute(sql)
     sql_res = cursor.fetchall()
     result = []
@@ -622,6 +684,12 @@ def static_all_model():
     print(result)
     np.save("../static/model_distribution_static_0921.npy", result)
 
+def add_error(notebook_id, error_str):
+    value_list = [notebook_id, error_str]
+    column_list = ["notebook_id", "error_str"]
+    print("\033[0;34;44madd error\033[0m")
+    return insert_db("error", column_list, value_list)
+
 def count_operator(datasetid, modeltype):
     title_list = []
     cursor, db = create_connection()
@@ -661,25 +729,45 @@ def count_operator(datasetid, modeltype):
     print(operator_count)
     return operator_count, all_count
 
-def get_compile_fail_pair(ip):
-    # ip = '39.99.150.216'
+def file_transfer(dataset_source_ip, notebook_source_ip):
     cursor, db = create_connection()
-    sql = "SELECT pair.nid, dataset.dataSourceUrl " \
-          "FROM pair, notebook, dataset " \
-          "WHERE notebook.id=pair.nid " \
-          "and dataset.id=pair.did " \
-          "and notebook.add_run=2 " \
-          "and notebook.add_sequence=1 " \
-          "and notebook.server_ip='" + ip + "' " \
-                                            "and dataset.isdownload=1 " \
-                                            "and dataset.server_ip='" + ip + "'"
+    sql = "SELECT notebook.id FROM notebook,pair,dataset WHERE notebook.id = pair.nid and pair.did=dataset.id and notebook.server_ip != dataset.server_ip and notebook.isdownload=1 and dataset.isdownload=1 and dataset.server_ip='" + dataset_source_ip  + "' and notebook.server_ip='" +  notebook_source_ip + "'"
+
     cursor.execute(sql)
     sql_res = cursor.fetchall()
-    result = []
+    count = 0
+    print(sql)
     for row in sql_res:
-        data_path = row[1].split('/')[-1].strip()
-        result.append((row[0], data_path))
-    return result
+        print(count)
+        notebook_id = row[0]
+        server_dict = eval(CONFIG.get('server', 'server'))
+
+        host = dataset_source_ip
+        port = server_dict[dataset_source_ip]['port']
+        username = server_dict[dataset_source_ip]['username']
+        password = server_dict[dataset_source_ip]['password']
+        target_notebook_path = server_dict[dataset_source_ip]['npath']
+        source_notebook_path = server_dict[notebook_source_ip]['npath']
+
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+        ssh_client.connect(host, port, username, password)
+
+        target_path = target_notebook_path + str(notebook_id) + '.ipynb'
+        source_path = source_notebook_path + str(notebook_id) + '.ipynb'
+
+        scpclient = SCPClient(ssh_client.get_transport(), socket_timeout=15.0)
+        try:
+            scpclient.put(source_path, target_path)
+            count += 1
+        except FileNotFoundError as e:
+            print(e)
+            print("系统找不到指定文件" + source_path)
+        else:
+            print(count, "文件上传成功")
+            update_db('notebook', 'is_transferred', 1, 'id', '=', row[0])
+
+
 if __name__ == '__main__':
     # CONFIG = configparser.ConfigParser()
     # CONFIG.read('config.ini')
@@ -697,20 +785,19 @@ if __name__ == '__main__':
     #     print(model[i]['seq_num'])
     #     print("\033[0;33;41mno_seq_num\033[0m")
     #     print(model[i]['no_seq_num'])
-    ip = '39.99.150.216'
-    cursor, db = create_connection()
-    sql = "SELECT distinct notebook.id " \
-          "FROM pair, notebook, dataset " \
-          "WHERE notebook.id=pair.nid " \
-          "and dataset.id=pair.did " \
-          "and notebook.add_run=1 " \
-          "and notebook.add_sequence=1 " \
-          "and notebook.server_ip='" + ip + "' " \
-                                            "and dataset.isdownload=1 " \
-                                            "and dataset.server_ip='" + ip + "'"
-    cursor.execute(sql)
-    sql_res = cursor.fetchall()
-    coun = 0
-    for row in sql_res:
-        coun += 1
-    print(coun)
+
+
+    # ip = '39.99.150.216'
+    # cursor, db = create_connection()
+    # sql = 'select count(distinct notebook_id), error_str from error group by error_str order by count(id)'
+    # cursor.execute(sql)
+    # sql_res = cursor.fetchall()
+    # coun = 0
+    # for row in sql_res:
+    #     if 'No such file or directory: ' in row[1]:
+    #         continue
+    #     print(row[1])
+    #     coun += 1
+    # print(coun)
+
+    file_transfer('10.77.70.126','10.77.70.123')

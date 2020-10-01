@@ -1404,7 +1404,7 @@ def batch_running(notebook_path, save_walk_logs_path,ip):
     :param save_walk_logs_path: 用来存储walk_logs
     :return: 无
     """
-    notebook_info_list = get_batch_notebook_info(ip)
+    notebook_info_list = get_batch_notebook_info(ip,type=2)
     for notebook_info in notebook_info_list:
         notebook_id = notebook_info[0]
         notebook_title = notebook_info[1]
@@ -1502,5 +1502,5 @@ def main(argv):
     return
     
 if __name__ == "__main__":
-   # main(sys.argv[1:])
-   check_table_data('../spider/notebook', '39.99.150.216')
+   main(sys.argv[1:])
+   # check_table_data('../spider/notebook', '39.99.150.216')
