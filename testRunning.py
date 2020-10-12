@@ -36,7 +36,7 @@ def get_code_txt(path, remove_notes=True):
             index = 0
             if index == len(line):
                 continue
-            print(line,'\'\'\'' not in line and '"""' not in line and in_beizhu==False)
+            # print(line,'\'\'\'' not in line and '"""' not in line and in_beizhu==False)
             if '\'\'\'' not in line and '"""' not in line and in_beizhu==False:
                 # print(line)
                 while line[index] != '#' and index < len(line) -1:
@@ -65,7 +65,7 @@ def get_code_txt(path, remove_notes=True):
                 temp = line
             else:
                 temp = line
-            print(temp)
+            # print(temp)
             if temp == '':
                 continue
             if temp[-1] != '\n':
@@ -271,7 +271,7 @@ def running(notebook_id, func_def, new_path,count, found=False):
         can_run = True
         # return 'succeed'
     except Exception as e:
-        traceback.print_exc()
+        # traceback.print_exc()
         error_str = str(e)
         new_code = func_def
         foun = 0
@@ -297,7 +297,9 @@ def running(notebook_id, func_def, new_path,count, found=False):
         elif "No module named " in error_str and '_tkinter' not in error_str:
             package = error_str.replace("No module named ", "")
             package = package[1:-1]
-            command = ' pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
+            # command = ' pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
+            # os.system(command)
+            command = ' pip install -i https://pypi.tuna.tsinghua.edu.cn/simple ' + package.split('.')[0]
             os.system(command)
             print('error 3')
         elif  ": No such file or directory" in error_str:
@@ -319,6 +321,15 @@ def running(notebook_id, func_def, new_path,count, found=False):
             # print('new_code:', new_code)
             foun = 1
             print('error 5')
+        elif "File b" in error_str:
+            index1 = error_str.find("'")
+            index2 = error_str.find("'", index1 + 1)
+            error_path = error_str[index1 + 1:index2]
+            new_code = found_dataset(error_path, 1, new_path, func_def)
+            # print('error_path:', error_path)
+            print('error 4')
+            foun = 1
+            print('error 5')
         elif "'DataFrame' object has no attribute 'ix'" in error_str or "'Series' object has no attribute 'ix'" in error_str:
             new_code = func_def.replace('.ix', '.iloc')
             print('error 6')
@@ -327,7 +338,7 @@ def running(notebook_id, func_def, new_path,count, found=False):
             print('error 7')
         else:
             # print("?")
-            traceback.print_exc()
+            # traceback.print_exc()
             print("\033[0;31;40merror_str\033[0m", error_str)
             print('error 8')
 
@@ -479,7 +490,7 @@ def compare_dataframe(new_df, column_list, save_path, origin_data_0=[]):
             head = ind
             break
     origin_code = insert_one_line_in_code(origin_code, head+1, function_def)
-    print("weewrwL:", origin_code)
+    # print("weewrwL:", origin_code)
     code_list = origin_code.split('\n')
     add_num = 0
     is_add_column = False
@@ -617,7 +628,7 @@ def add_result(notebook_id, origin_code, walk_logs_path = "../walklogs"):
                         head -= 1
                 if code[head] == ')':
                     while code[head] != '(':
-                        print(code[head])
+                        # print(code[head])
                         head -= 1
                 head -= 1
             left_index = index + now_len
@@ -664,7 +675,7 @@ def add_result(notebook_id, origin_code, walk_logs_path = "../walklogs"):
                         head -= 1
                 if code[head] == ')':
                     while code[head] != '(':
-                        print(code[head])
+                        # print(code[head])
                         head -= 1
                 head -= 1
 
@@ -775,7 +786,7 @@ def add_result(notebook_id, origin_code, walk_logs_path = "../walklogs"):
                             head -= 1
                     if code[head] == ')':
                         while code[head] != '(':
-                            print(code[head])
+                            # print(code[head])
                             head -= 1
                     head -= 1
                 left_index = index + now_len
@@ -1439,7 +1450,7 @@ def single_runnings(notebook_id, dataset_name ,notebook_root="../notebook",datas
     add_code = add_code.replace('pandas.tools', 'pandas')
     add_code = add_code.replace('from sklearn import cross_validation', 'from sklearn.model_selection import cross_val_score')
     add_code = add_code.replace('from sklearn.cross_validation import',
-                                'from sklearn.model_selection ')
+                                'from sklearn.model_selection import')
     add_code = add_code.replace('import plotly.plotly as py', 'import chart_studio.plotly as py')
 
     add_code = insert_one_line_in_code(add_code,'import matplotlib.pyplot as plt','matplotlib.use("agg")\n')
@@ -1466,8 +1477,8 @@ def single_runnings(notebook_id, dataset_name ,notebook_root="../notebook",datas
 
 
 
-def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.99.150.216"):
-    pairs = get_pair(ip,type=3)
+def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.99.150.216", pair_type=5):
+    pairs = get_pair(ip,type=pair_type)
     print(len(pairs))
     count = 0
     for pair in pairs:
@@ -1478,12 +1489,12 @@ def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.9
         # if pair[0] == '2380589':
             notebook_id = pair[0]
             dataset_name = pair[1]
-
             # if notebook_name == "most-dangerous-departure-and-destination-cities.ipynb":
-
             print("\033[0;33;44m" + str(notebook_id) + "\033[0m")
+            if len(pair) == 3:
+                print(pair[2])
             res = single_runnings(notebook_id, dataset_name, notebook_root, dataset_root)
-            print(res)
+            # print(res)
             if res != 'False' and res != 'compile fail' and res != 'read fail':
                 update_db("notebook", "add_run", '1', 'id', '=', notebook_id)
             if res == 'compile fail':
@@ -1499,5 +1510,9 @@ def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.9
 
 
 if __name__ == '__main__':
-    batch_running(notebook_root="../spider/notebook",dataset_root="../spider/unzip_dataset")
+    print('input this ip:')
+    ip = input()
+    print('input this pair: 1: add_run=1 in aliyun; 2: add_run=2 in aliyun,..... 5: add_run=0 in other')
+    ptype = input()
+    batch_running(notebook_root="../notebook",dataset_root="../unzip_dataset",ip=ip,pair_type=int(ptype))
     # check_no_model()

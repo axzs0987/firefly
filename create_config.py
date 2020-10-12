@@ -520,7 +520,6 @@ config["server"] = {
             'username' : 'chsibei',
             'password' : 'info500',
         },
-
     }
 }
 with open('config.ini','w') as f:

@@ -1404,7 +1404,7 @@ def batch_running(notebook_path, save_walk_logs_path,ip):
     :param save_walk_logs_path: 用来存储walk_logs
     :return: 无
     """
-    notebook_info_list = get_batch_notebook_info(ip,type=2)
+    notebook_info_list = get_batch_notebook_info(ip,type=4)
     for notebook_info in notebook_info_list:
         notebook_id = notebook_info[0]
         notebook_title = notebook_info[1]

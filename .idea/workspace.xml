@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2e5c4e3b-8dae-423b-b670-90900ab00514" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/statistic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/create_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/create_config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebook2sequence.py" beforeDir="false" afterPath="$PROJECT_DIR$/notebook2sequence.py" afterDir="false" />
@@ -18,14 +19,16 @@
     <session id="763870271">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="5" />
+          <entry key="project.closed" value="9" />
           <entry key="project.open.time.1" value="1" />
-          <entry key="project.open.time.17" value="1" />
+          <entry key="project.open.time.13" value="2" />
+          <entry key="project.open.time.15" value="1" />
+          <entry key="project.open.time.17" value="2" />
           <entry key="project.open.time.18" value="1" />
           <entry key="project.open.time.19" value="1" />
           <entry key="project.open.time.24" value="3" />
           <entry key="project.open.time.40" value="1" />
-          <entry key="project.opened" value="8" />
+          <entry key="project.opened" value="12" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -34,7 +37,7 @@
           <entry key="ipynb" value="32" />
           <entry key="json" value="2" />
           <entry key="log" value="3" />
-          <entry key="py" value="13" />
+          <entry key="py" value="14" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -44,17 +47,17 @@
           <entry key="JSON" value="2" />
           <entry key="Log" value="2" />
           <entry key="PLAIN_TEXT" value="1" />
-          <entry key="Python" value="13" />
+          <entry key="Python" value="14" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="58564" />
+          <entry key="py" value="64170" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="58564" />
+          <entry key="Python" value="64170" />
         </counts>
       </usages-collector>
     </session>
@@ -64,8 +67,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/create_config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="539">
-              <caret line="37" column="27" lean-forward="true" selection-start-line="37" selection-start-column="27" selection-end-line="37" selection-end-column="27" />
+            <state relative-caret-position="705">
+              <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
             </state>
           </provider>
         </entry>
@@ -73,15 +76,29 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="311">
-              <caret line="127" column="148" selection-start-line="127" selection-start-column="148" selection-end-line="127" selection-end-column="148" />
+            <state relative-caret-position="164">
+              <caret line="1434" column="49" selection-start-line="1434" selection-start-column="48" selection-end-line="1434" selection-end-column="49" />
               <folding>
                 <element signature="e#26#76#0" expanded="true" />
-                <marker date="1601515560926" expanded="true" signature="4097:7093" ph="..." />
-                <marker date="1601515560926" expanded="true" signature="6286:6290" ph="..." />
-                <marker date="1601515560926" expanded="true" signature="10770:11140" ph="..." />
-                <marker date="1601515560926" expanded="true" signature="25098:25287" ph="..." />
-                <marker date="1601515560926" expanded="true" signature="26629:28269" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="4097:7093" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="6286:6290" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="10770:11140" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="26321:26510" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="28110:28718" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="30089:65062" ph="..." />
+                <marker date="1602485340355" expanded="true" signature="65061:65062" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/statistic.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="60">
+              <caret line="4" lean-forward="true" selection-start-line="4" selection-end-line="4" />
+              <folding>
+                <element signature="e#0#35#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -102,11 +119,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="11950">
-              <caret line="1451" column="71" selection-start-line="1451" selection-start-column="68" selection-end-line="1451" selection-end-column="71" />
+            <state relative-caret-position="446">
+              <caret line="1502" column="4" lean-forward="true" selection-start-line="1450" selection-end-line="1502" selection-end-column="4" />
               <folding>
                 <element signature="e#26#56#0" expanded="true" />
-                <marker date="1601191591064" expanded="true" signature="72303:72308" ph="..." />
+                <marker date="1601780936239" expanded="true" signature="72303:72308" ph="..." />
               </folding>
             </state>
           </provider>
@@ -124,12 +141,12 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/testRunning.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="246">
-              <caret line="330" column="61" selection-start-line="329" selection-start-column="12" selection-end-line="330" selection-end-column="61" />
+            <state relative-caret-position="416">
+              <caret line="1513" column="16" lean-forward="true" selection-start-line="1512" selection-start-column="4" selection-end-line="1513" selection-end-column="16" />
               <folding>
                 <element signature="e#1#51#0" expanded="true" />
-                <marker date="1601465188384" expanded="false" signature="12654:12655" ph="..." />
-                <marker date="1601465188384" expanded="true" signature="23146:23151" ph="..." />
+                <marker date="1601817442025" expanded="false" signature="13185:13186" ph="..." />
+                <marker date="1601817442025" expanded="true" signature="23679:23684" ph="..." />
               </folding>
             </state>
           </provider>
@@ -146,36 +163,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>succeed</find>
-      <find>running</find>
-      <find>get_code_txt</find>
-      <find>single_runnings</find>
-      <find>add_sequence_from_walk_logs</find>
-      <find>get_batch_notebook_info</find>
-      <find>cant_sequence</find>
-      <find>model_pred</find>
-      <find>single_running</find>
-      <find>this_walk_logs</find>
-      <find>add_run</find>
-      <find>insert_one_line_in_code</find>
-      <find>compile fail</find>
-      <find>np.load</find>
-      <find>get</find>
-      <find>cot</find>
-      <find>type == 3</find>
-      <find>add_resu</find>
-      <find>read fail</find>
-      <find>from sklearn.cross_validation import</find>
-      <find>return &quot;False&quot;</find>
-      <find>running(</find>
       <find>os.</find>
       <find>CONFIG</find>
       <find>add_result</find>
       <find>type ==</find>
-      <find>type=</find>
-      <find>get_pair</find>
-      <find>file_transfer</find>
       <find>update_db</find>
+      <find>type=</find>
+      <find>add_run</find>
+      <find>pip</find>
+      <find>running</find>
+      <find>print(</find>
+      <find>print</find>
+      <find>traceback.print_exc()</find>
+      <find>pip3</find>
+      <find>file_transfer</find>
+      <find>get_all_mean_of</find>
+      <find>cant_</find>
+      <find>get_all_mean_of_</find>
+      <find>cant_sequence</find>
+      <find>cant_sequence&quot;</find>
+      <find>get_notebook_</find>
+      <find>get_batch_notebook_info</find>
+      <find>found_dataset</find>
+      <find>batch_running</find>
+      <find>get_pair</find>
+      <find>get_mean_group_by_dataset</find>
+      <find>get_operator_comp_group_by_dataset</find>
+      <find>get_one_reuslt</find>
+      <find>dataset_score_dic</find>
+      <find>config</find>
+      <find>get_physic_operator_score</find>
     </findStrings>
     <replaceStrings>
       <replace>3</replace>
@@ -214,16 +231,17 @@
         <option value="$PROJECT_DIR$/../kaggle_crawl/filtPandas/data-visualization/baseline-eda-pipe-modelling-w-hparam-easy-code.ipynb/baseline-eda-pipe-modelling-w-hparam-easy-code.ipynb" />
         <option value="$USER_HOME$/Downloads/firefly-master/filtPandas/eda/baseline-eda-pipe-modelling-w-hparam-easy-code.ipynb/baseline-eda-pipe-modelling-w-hparam-easy-code.ipynb" />
         <option value="$USER_HOME$/fsdownload/100071.ipynb" />
+        <option value="$PROJECT_DIR$/create_config.py" />
         <option value="$PROJECT_DIR$/notebook2sequence.py" />
         <option value="$PROJECT_DIR$/testRunning.py" />
-        <option value="$PROJECT_DIR$/create_config.py" />
+        <option value="$PROJECT_DIR$/statistic.py" />
         <option value="$PROJECT_DIR$/utils.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1182" />
-    <option name="y" value="-75" />
+    <option name="x" value="24" />
+    <option name="y" value="31" />
     <option name="width" value="1233" />
     <option name="height" value="720" />
   </component>
@@ -235,6 +253,7 @@
     <panes />
   </component>
   <component name="PropertiesComponent">
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/baiping/PycharmProjects/firefly/create_config.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
@@ -263,22 +282,22 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1182" y="-75" width="1233" height="720" extended-state="0" />
+    <frame x="24" y="31" width="1233" height="720" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.08267509" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4997367" weight="0.32970297" />
+      <window_info active="true" anchor="bottom" id="Find" order="1" sideWeight="0.4997367" visible="true" weight="0.10828026" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="8" sideWeight="0.73349833" visible="true" weight="0.036624204" />
-      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.26650164" side_tool="true" visible="true" weight="0.036624204" />
+      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.73349833" weight="0.26273885" />
+      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.26650164" side_tool="true" weight="0.26273885" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -293,7 +312,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>1412</line>
+          <line>1423</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -313,7 +332,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utils.py</url>
-          <line>478</line>
+          <line>491</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -323,22 +342,22 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>515</line>
+          <line>526</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>1469</line>
+          <line>1480</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>1472</line>
+          <line>1483</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testRunning.py</url>
-          <line>893</line>
+          <line>904</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
@@ -562,47 +581,59 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/create_config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="705">
+          <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/notebook2sequence.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11950">
-          <caret line="1451" column="71" selection-start-line="1451" selection-start-column="68" selection-end-line="1451" selection-end-column="71" />
+        <state relative-caret-position="446">
+          <caret line="1502" column="4" lean-forward="true" selection-start-line="1450" selection-end-line="1502" selection-end-column="4" />
           <folding>
             <element signature="e#26#56#0" expanded="true" />
-            <marker date="1601191591064" expanded="true" signature="72303:72308" ph="..." />
+            <marker date="1601780936239" expanded="true" signature="72303:72308" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testRunning.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="330" column="61" selection-start-line="329" selection-start-column="12" selection-end-line="330" selection-end-column="61" />
+        <state relative-caret-position="416">
+          <caret line="1513" column="16" lean-forward="true" selection-start-line="1512" selection-start-column="4" selection-end-line="1513" selection-end-column="16" />
           <folding>
             <element signature="e#1#51#0" expanded="true" />
-            <marker date="1601465188384" expanded="false" signature="12654:12655" ph="..." />
-            <marker date="1601465188384" expanded="true" signature="23146:23151" ph="..." />
+            <marker date="1601817442025" expanded="false" signature="13185:13186" ph="..." />
+            <marker date="1601817442025" expanded="true" signature="23679:23684" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/create_config.py">
+    <entry file="file://$PROJECT_DIR$/statistic.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="539">
-          <caret line="37" column="27" lean-forward="true" selection-start-line="37" selection-start-column="27" selection-end-line="37" selection-end-column="27" />
+        <state relative-caret-position="60">
+          <caret line="4" lean-forward="true" selection-start-line="4" selection-end-line="4" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="311">
-          <caret line="127" column="148" selection-start-line="127" selection-start-column="148" selection-end-line="127" selection-end-column="148" />
+        <state relative-caret-position="164">
+          <caret line="1434" column="49" selection-start-line="1434" selection-start-column="48" selection-end-line="1434" selection-end-column="49" />
           <folding>
             <element signature="e#26#76#0" expanded="true" />
-            <marker date="1601515560926" expanded="true" signature="4097:7093" ph="..." />
-            <marker date="1601515560926" expanded="true" signature="6286:6290" ph="..." />
-            <marker date="1601515560926" expanded="true" signature="10770:11140" ph="..." />
-            <marker date="1601515560926" expanded="true" signature="25098:25287" ph="..." />
-            <marker date="1601515560926" expanded="true" signature="26629:28269" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="4097:7093" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="6286:6290" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="10770:11140" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="26321:26510" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="28110:28718" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="30089:65062" ph="..." />
+            <marker date="1602485340355" expanded="true" signature="65061:65062" ph="..." />
           </folding>
         </state>
       </provider>
