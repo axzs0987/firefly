@@ -126,7 +126,7 @@ config["operators"] = {
             "params": ["with_centering", "with_scaling", "quantile_range", "copy"],
         },
         "clip": {
-            "call_type": 4,
+            "call_type": 0,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Scale',
             "physic_operations": ["clip"],

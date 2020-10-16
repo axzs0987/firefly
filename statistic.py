@@ -305,16 +305,16 @@ def get_operator_param_score():
                     all_score += result[i]
                     all_count += 1
                     parameter_dic[row[1]][row[num]][i] = (all_score, all_count)
-
+    # np.save('./param_score_dic.npy', ope_dic)
     for i in parameter_dic: # operator
         for j in parameter_dic[i]: # parameter
             for k in parameter_dic[i][j]: # score type
                 all_score = parameter_dic[i][j][k][0]
                 all_count = parameter_dic[i][j][k][1]
                 if all_count == 0:
-                    parameter_dic[i][j][k] = -1
+                    parameter_dic[i][j][k] = (-1,0)
                 else:
-                    parameter_dic[i][j][k] = all_score / all_count
+                    parameter_dic[i][j][k] = (all_score / all_count, all_count)
 
 
     np.save('./param_score_dic.npy', ope_dic)
@@ -325,7 +325,7 @@ def get_physic_operator_score():
     operator_dic = eval(CONFIG.get('operators', 'operations'))
     ope_dic = {}
     for operator in operator_dic.keys():
-        sql = "SELECT distinct notebook_id FROM operator where operator = '" + i + "'"
+        sql = "SELECT distinct notebook_id FROM operator where operator = '" + operator + "'"
         cursor.execute(sql)
         sql_res = cursor.fetchall()
         for row in sql_res:
@@ -348,9 +348,9 @@ def get_physic_operator_score():
             all_score = ope_dic[i][j][0]
             all_count = ope_dic[i][j][1]
             if all_count == 0:
-                ope_dic[i][j] = -1
+                ope_dic[i][j] = (-1,0)
             else:
-                ope_dic[i][j] = all_score/all_count
+                ope_dic[i][j] = (all_score/all_count, all_count)
     np.save('./ope_score_dic.npy', ope_dic)
 
 if __name__ == '__main__':

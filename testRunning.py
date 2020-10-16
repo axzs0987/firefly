@@ -1507,8 +1507,6 @@ def batch_running(notebook_root="../notebook",dataset_root="../dataset",ip="39.9
         #
     # print(count)
 
-
-
 if __name__ == '__main__':
     print('input this ip:')
     ip = input()
