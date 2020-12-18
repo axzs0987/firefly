@@ -5,10 +5,13 @@ from utils import add_sequence_from_walk_logs
 from utils import get_batch_notebook_info
 from utils import update_db
 from utils import get_batch_no_seq_notebook_info
+from utils import add_sequence_from_walk_logs_show
+from utils import get_host_ip
 import ast
 import astunparse
 import configparser
 import sys, getopt
+import socket
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read('config.ini')
@@ -231,6 +234,7 @@ def create_new_sequence_node(operator_name, physic_operation, args_name, keyword
         new_operator_node["parameter_type"][i] = args_type
 
     walk_logs["operator_sequence"].append(new_operator_node)
+    # print(walk_logs["operator_sequence"])
     return new_operator_node
 
 def create_new_funcdef_sequence_node(operator_name, physic_operation, args_name, keywords_name, data_param_id, data_param_name, data_object_value):
@@ -362,6 +366,7 @@ def walking(node):
             data_flowing(assign_target_list, assign_value_list)
 
         #############处理读入收据事件#########################
+        # print(type(node.value).__name__)
         if assign_value_list[0] == "This is a read file functions!!!!!": #自定义函数读入，由于是赋值，所以肯定是外部读入
             for assign_target in assign_target_list:
                 if (len(assign_target_list) == 1):
@@ -373,7 +378,6 @@ def walking(node):
                         walk_logs["data_types"].append("test")
                     else:
                         walk_logs["data_types"].append("data")
-
 
         elif type(node.value).__name__ == 'Call': # 只考虑read函数了
             if type(node.value.func).__name__ == 'Attribute':
@@ -401,6 +405,37 @@ def walking(node):
                             if ('train' in assign_target_list[0] or 'Train' in assign_target_list[0] or 'TRAIN' in assign_target_list[0]):
                                 walk_logs["data_types"].append("train")
                             elif ('test' in assign_target_list[0] or 'Test' in assign_target_list[0] or 'TEST' in assign_target_list[0] ):
+                                walk_logs["data_types"].append("test")
+                            else:
+                                walk_logs["data_types"].append("data")
+            elif type(node.value.func).__name__ == 'Name':
+                # print(node.value.func.id)
+                if node.value.func.id == 'read_csv' or node.value.func.id == 'read_pickle' or node.value.func.id == 'read_table' or node.value.func.id == 'read_fwf' or \
+                        node.value.func.id == 'read_clipboard' or node.value.func.id == 'read_excel' or node.value.func.id == 'ExcelFile.parse' or node.value.func.id == 'ExcelWriter' or \
+                        node.value.func.id == 'read_json' or node.value.func.id == 'json_normalize' or node.value.func.id == 'build_table_schema' or node.value.func.id == 'read_html' or \
+                        node.value.func.id == 'read_hdf' or node.value.func.id == 'read_feather' or node.value.func.id == 'read_parquet' or node.value.func.id == 'read_orc' or \
+                        node.value.func.id == 'read_sas' or node.value.func.id == 'read_spss' or node.value.func.id == 'read_sql_table' or node.value.func.id == 'read_sql_query' or \
+                        node.value.func.id == 'read_sql' or node.value.func.id == 'read_gbq' or node.value.func.id == 'read_stata':
+                    if (condition_switch["is_funcdef"] == True): #如果读入数据发生在用户自定义函数内，则记录这个函数名，在调用函数时记得处理，把读入数据的变量存入function_read_file_values
+                        condition_switch["read_function"] = condition_switch["now_func_name"]
+                        for assign_target in assign_target_list:
+                            if (len(assign_target_list) == 1):
+                                walk_logs["function_read_file_values"].append(assign_target)
+                                if ('train' in assign_target or 'Train' in assign_target or 'TRAIN' in assign_target):
+                                    walk_logs["function_read_file_types"].append("train")
+                                elif ('test' in assign_target or 'Test' in assign_target or 'TEST' in
+                                      assign_target):
+                                    walk_logs["function_read_file_types"].append("test")
+                                else:
+                                    walk_logs["function_read_file_types"].append("data")
+                    else:  # 如果正常读入函数，或者函数内部定义全局变量
+                        if (len(assign_target_list) == 1):
+                            walk_logs["data_values"].append(assign_target_list[0])
+                            if ('train' in assign_target_list[0] or 'Train' in assign_target_list[0] or 'TRAIN' in
+                                    assign_target_list[0]):
+                                walk_logs["data_types"].append("train")
+                            elif ('test' in assign_target_list[0] or 'Test' in assign_target_list[0] or 'TEST' in
+                                  assign_target_list[0]):
                                 walk_logs["data_types"].append("test")
                             else:
                                 walk_logs["data_types"].append("data")
@@ -577,6 +612,7 @@ def walking(node):
                                                                   keywords_name, data_param_id=i,
                                                                   data_param_name=dataset_name,data_object_value=astunparse.unparse(node.args[0]))
                 elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    # print('\033[0;31;40m\ttype4:' + node.func.attr + '\033[0m')
                     attr_body = walking(node.func.value)
                     physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][
                         0]
@@ -595,13 +631,19 @@ def walking(node):
                         else:
                             # print(walk_logs["data_values"][i])
                             if type(walk_logs["data_values"][i]).__name__ == 'list':
+                                data_object = 'unknown'
                                 for j in walk_logs["data_values"][i]:
                                     if j in astunparse.unparse(node.func.value):
                                         data_object = j
                                         is_in = True
+
                             elif walk_logs["data_values"][i] in astunparse.unparse(node.func.value):
                                 data_object = walk_logs["data_types"][i]
                                 is_in = True
+                            else:
+                                data_object = ''
+                                is_in = True
+                            is_in = True
 
                     # if is_in == False:
                     #     data_object = "unknown"
@@ -755,14 +797,20 @@ def walking(node):
                     physic_operation = eval(CONFIG.get('operators', 'operations'))[func_body]["physic_operations"][0]
                     if (len(node.args) != 0):
                         dataset_name = walking(node.args[0])
-                    else:
+                    elif eval(CONFIG.get('operators', 'operations'))[func_body]['params'][0] in keywords_name:
                         dataset_name = keywords_name[
                             eval(CONFIG.get('operators', 'operations'))[func_body]['params'][0]]
+                    else:
+                        dataset_name = func_body
                     for i in range(0, len(condition_switch["now_func_args"])):
                         if (dataset_name == condition_switch["now_func_args"][i]):
                             create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
                                                              data_param_id=i, data_param_name=dataset_name,
                                                              data_object_value=astunparse.unparse(node.args[0]))
+                        else:
+                            create_new_funcdef_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
+                                                             data_param_id=i, data_param_name=dataset_name,
+                                                             data_object_value='')
 
 
                 elif check_model(func_body):
@@ -873,7 +921,10 @@ def walking(node):
                         if(len(node.args) != 0):
                             dataset_name = walking(node.args[0])
                         else:
-                            dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                            try:
+                                dataset_name = keywords_name[eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0]]
+                            except:
+                                print('')
                         is_in = False
                         for i in range(0, len(walk_logs["data_values"])):
                             if (dataset_name == walk_logs["data_values"][i]):
@@ -905,6 +956,7 @@ def walking(node):
                                 create_new_sequence_node(node.func.attr, physic_operation, args_name, keywords_name,
                                                          data_object, astunparse.unparse(node.keywords[ind]))
                 elif check_operators(node.func.attr, 4):  # 如果命中4操作 np.clip
+                    # print('\033[0;31;40m\ttype4:' + node.func.attr + '\033[0m')
                     attr_body = walking(node.func.value)
                     physic_operation = eval(CONFIG.get('operators', 'operations'))[node.func.attr]["physic_operations"][0]
                     # print(astunparse.unparse(node))
@@ -925,12 +977,16 @@ def walking(node):
                                 if walk_logs["data_values"][i] in astunparse.unparse(node.args[0]):
                                     data_object = walk_logs["data_types"][i]
                                     is_in = True
+                                s_in = True
                             else:
                                 if walk_logs["data_values"][i] in astunparse.unparse(node.keywords):
                                     data_object = walk_logs["data_types"][i]
                                     is_in = True
                                 elif walk_logs["data_values"][i] in astunparse.unparse(node.func.value):
                                     data_object = walk_logs["data_types"][i]
+                                    is_in = True
+                                else:
+                                    data_object = ''
                                     is_in = True
                     # if is_in == False:
                     #     data_object = "unknown"
@@ -1175,9 +1231,11 @@ def walking(node):
                     physic_operation = eval(CONFIG.get('operators', "operations"))[func_body]["physic_operations"][0]
                     if (len(node.args) != 0):
                         dataset_name = walking(node.args[0])
-                    else:
+                    elif  eval(CONFIG.get('operators', 'operations'))[node.func.attr]['params'][0] in keywords_name:
                         dataset_name = keywords_name[
                             eval(CONFIG.get('operators', 'operations'))[func_body]['params'][0]]
+                    else:
+                        dataset_name = func_body
                     is_in = False
                     for i in range(0, len(walk_logs["data_values"])):
                         if (dataset_name == walk_logs["data_values"][i]):
@@ -1188,10 +1246,13 @@ def walking(node):
                                 if walk_logs["data_values"][i] in astunparse.unparse(node.args[0]):
                                     data_object = walk_logs["data_types"][i]
                                     is_in = True
+                                else:
+                                    data_object = 'unknown'
                             else:
                                 if walk_logs["data_values"][i] in astunparse.unparse(node.keywords):
                                     data_object = walk_logs["data_types"][i]
                                     is_in = True
+                            is_in = True
                     # if is_in == False:
                     #     data_object = "unknown"
                     #     walk_logs["data_values"].append(dataset_name)
@@ -1207,8 +1268,12 @@ def walking(node):
                                 if key == eval(CONFIG.get('operators', 'operations'))[node.func.attr]["params"][0]:
                                     ind = i
                                     break
-                            create_new_sequence_node(func_body, physic_operation, args_name, keywords_name, data_object,
+                            if len(node.keywords) != 0:
+                                create_new_sequence_node(func_body, physic_operation, args_name, keywords_name, data_object,
                                                      astunparse.unparse(node.keywords[ind]))
+                            else:
+                                create_new_sequence_node(func_body, physic_operation, args_name, keywords_name,
+                                                         data_object,'')
 
         return return_list
 
@@ -1216,7 +1281,16 @@ def walking(node):
     elif type(node).__name__ == 'Name': #返回str，变量名
         return node.id
     elif type(node).__name__ == "Subscript": #返回str，主体名，这里先不考虑slice值，之后可以加上
-        data_object = walking(node.value) #主体有可能是Call，Attribute，Name，返回这三个当主体对象
+        is_iloc = 0
+        if type(node.value).__name__ == 'Attribute':
+            if node.value.attr == 'iloc':
+                if type(node.slice).__name__ == 'ExtSlice':
+                    is_iloc = 1
+                    data_object = walking(node.value.value)
+                    create_new_sequence_node('iloc', 'drop_column', [], {}, data_object,astunparse.unparse(node))
+
+        if is_iloc == 0:
+            data_object = walking(node.value) #主体有可能是Call，Attribute，Name，返回这三个当主体对象
         return data_object
     elif type(node).__name__ == 'List': #返回list，变量/主体名
         lis = []
@@ -1370,6 +1444,10 @@ def single_running(notebook_id, notebook_url, notebook_path, is_save=False, save
                 new_title += '-'
         
         code_txt = get_code_txt(notebook_path + '/' + str(notebook_id) + '.ipynb')
+        code_list = code_txt.split('\n')
+        # for index,line in enumerate(code_list):
+        #     print(index,line)
+
     except Exception as e:
         print('str(Exception):\t', str(e))
         print("\033[0;31;40m\tread error\033[0m")
@@ -1379,8 +1457,8 @@ def single_running(notebook_id, notebook_url, notebook_path, is_save=False, save
         r_node = ast.parse(code_txt)
     except Exception as e:
         print('str(Exception):\t', str(e))
-        print("\033[0;31;40m\tparse error\033[0m")
-        return "ERROR"
+        print("\033[0;31;40m\tast error\033[0m")
+        return "parse error"
 
 
     visitor.visit(r_node)
@@ -1398,13 +1476,66 @@ def single_running(notebook_id, notebook_url, notebook_path, is_save=False, save
             print("\033[0;31;40m\tadd database fail\033[0m")
     return walk_logs
 
+
+def single_running_show(notebook_id, notebook_url, notebook_path, is_save=False, save_walk_logs_path=""):
+    """
+    :param notebook_id: 数据库里notebook的id
+    :param notebook_title: 数据库里notebook的title，根路径+title = 文件路径
+    :param notebook_path: 存储notebook的根路径
+    :return: 返回当前notebook的walk_logs
+    """
+    global condition_switch, walk_logs
+    notebook_title = notebook_url.split('/')[-1]
+    reflush_walk_logs_and_condition_switch(notebook_id, notebook_title)
+    walk_logs["notebook_id"] = int(notebook_id)
+    walk_logs["notebook_title"] = notebook_title
+    try:
+        notebook_title_list = notebook_title.split(' ')
+        new_title = ''
+        for i in range(0, len(notebook_title_list)):
+            new_title += notebook_title_list[i]
+            if i != len(notebook_title_list) - 1:
+                new_title += '-'
+
+        code_txt = get_code_txt(notebook_path + '/' + str(notebook_id) + '.ipynb')
+        code_list = code_txt.split('\n')
+        # for index,line in enumerate(code_list):
+        #     print(index, line)
+    except Exception as e:
+        print('str(Exception):\t', str(e))
+        print("\033[0;31;40m\tread error\033[0m")
+        return "ERROR"
+    visitor = CodeVisitor()
+    try:
+        r_node = ast.parse(code_txt)
+    except Exception as e:
+        print('str(Exception):\t', str(e))
+        print("\033[0;31;40m\tast error\033[0m")
+        return "parse error"
+
+    visitor.visit(r_node)
+    count = 0
+    seq = []
+    for i in walk_logs["operator_sequence"]:
+        count += 1
+        seq.append((i["operator_name"], i['data_object']))
+    print("seq:", seq)
+
+    if is_save == True:
+        try:
+            add_sequence_from_walk_logs(walk_logs, save_walk_logs_path)
+        except:
+            print("\033[0;31;40m\tadd database fail\033[0m")
+    return walk_logs
+
+
 def batch_running(notebook_path, save_walk_logs_path,ip):
     """
     :param notebook_path: 存储notebook的根路径
     :param save_walk_logs_path: 用来存储walk_logs
     :return: 无
     """
-    notebook_info_list = get_batch_notebook_info(ip,type=3)
+    notebook_info_list = get_batch_notebook_info(ip)
     for notebook_info in notebook_info_list:
         notebook_id = notebook_info[0]
         notebook_title = notebook_info[1]
@@ -1417,6 +1548,9 @@ def batch_running(notebook_path, save_walk_logs_path,ip):
             print("\033[0;31;40m\tsingle running fail\033[0m")
         if this_walk_logs == 'ERROR':
             continue
+        if this_walk_logs == 'parse error':
+            update_db("notebook", "cant_sequence", '5', 'id', '=', notebook_id)
+            continue
         # try:
         if True:
             result = add_sequence_from_walk_logs(this_walk_logs, save_walk_logs_path)
@@ -1424,7 +1558,36 @@ def batch_running(notebook_path, save_walk_logs_path,ip):
                 print(("\033[0;31;40m\tadd database fail\033[0m"))
         # except:
         #     print("\033[0;31;40m\tadd database fail\033[0m")
-
+def batch_running_show(notebook_path, save_walk_logs_path,ip):
+    """
+    :param notebook_path: 存储notebook的根路径
+    :param save_walk_logs_path: 用来存储walk_logs
+    :return: 无
+    """
+    notebook_info_list = get_batch_notebook_info(ip)
+    for notebook_info in notebook_info_list:
+        notebook_id = notebook_info[0]
+        notebook_title = notebook_info[1]
+        notebook_url = notebook_info[2]
+         # print(notebook_id)
+        # print(type(notebook_id))
+        # if notebook_id != '2598109':
+        #     continue
+        print("\033[0;34;40m\tid:" + str(notebook_id) + '\ttitle:' + notebook_title + "\033[0m")
+        # try:
+        this_walk_logs = single_running_show(notebook_id, notebook_url, notebook_path)
+        # except:
+        #     print("\033[0;31;40m\tsingle running fail\033[0m")
+        if this_walk_logs == 'ERROR':
+            continue
+        if this_walk_logs == 'parse error':
+            # update_db("notebook", "cant_sequence", '5', 'id', '=', notebook_id)
+            continue
+        # try:
+        if True:
+            result = add_sequence_from_walk_logs_show(this_walk_logs, save_walk_logs_path)
+            if result == "ERROR":
+                print(("\033[0;31;40m\tadd database fail\033[0m"))
 
 def check_table_data(notebook_path, ip):
     notebook_info_list = get_batch_no_seq_notebook_info(ip)
@@ -1455,7 +1618,7 @@ def main(argv):
     save_walk_logs_path = '../walklogs'
     notebook_id = 0
     notebook_title = ""
-    ip = "10.77.70.123"
+    ip = get_host_ip()
     is_save = False
     for opt, arg in opts:
         print(opt, arg)
@@ -1474,8 +1637,8 @@ def main(argv):
             sys.exit()
         elif opt in ("-r", "--rtype"):
             running_type = arg
-            if running_type != 'batch' and running_type != 'single':
-                print("r must be batch or single")
+            if running_type != 'batch' and running_type != 'single' and running_type != 'show':
+                print("r must be batch or single or show")
                 sys.exit()
         elif opt in ("-n", "--npath"):
             notebook_path = arg
@@ -1499,8 +1662,17 @@ def main(argv):
     elif running_type == 'single':
         single_running(notebook_id, notebook_title, notebook_path, is_save, save_walk_logs_path)
 
+    elif running_type == 'show':
+        batch_running_show(notebook_path, save_walk_logs_path,ip)
+
     return
+
+
+
     
 if __name__ == "__main__":
+   # 获取本机IP
    main(sys.argv[1:])
-   # check_table_data('../spider/notebook', '39.99.150.216')
+   # ip = get_host_ip()
+   # print(ip)
+   # check_table_data('../notebook', ip)

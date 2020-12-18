@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+service MsgService {
+    rpc rpc_do_an_action (do_an_action_param) returns (do_an_action_result){}
+    rpc rpc_get_origin_state (get_origin_state_param) returns (get_origin_state_result){}
+}
+
+message do_an_action_param {
+    int32 notebook_id = 1;
+    string notebook_code = 2;
+    int32 target_content_operation = 3;
+    int32 target_content_data_object = 4;
+    int32 column_num = 5;
+    int32 res_line_number = 6;
+}
+
+message do_an_action_result {
+    message Row{
+        repeated double row = 7;
+    }
+    repeated Row s_t = 8;
+    repeated Row s_t_plus_1 = 9;
+    int32 action_1 = 10;
+    int32 action_2 = 11;
+    float reward = 12;
+    bool terminal = 13;
+    string new_code = 14;
+    int32 res_line_number = 15;
+    int32 len_data_plus_1 = 21;
+}
+
+message get_origin_state_param {
+    int32 notebook_id = 16;
+    string notebook_code = 17;
+    int32 column_num = 18;
+}
+
+message get_origin_state_result {
+    message Row{
+        repeated double row = 19;
+    }
+    repeated Row s_t = 20;
+    int32 len_data = 22;
+}

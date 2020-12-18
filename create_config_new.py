@@ -62,30 +62,8 @@ config["database"] = {
 
 config["operators1"] = {
     "operations1":{
-        "numfillna": {
-            "index": 1,
-            "call_type": 0,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Imputer',
-            "physic_operations": ["filling_constant", "filling_by_stratage"],
-            "params": ["value", "method", "axis", "inplace", "limit", "downcast"],
-            'need_param': [0],
-            'default_param_numeric': [0],
-            'default_param_str': ['none'],
-        },
-        "strfillna": {
-            "index": 2,
-            "call_type": 0,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Imputer',
-            "physic_operations": ["filling_constant", "filling_by_stratage"],
-            "params": ["value", "method", "axis", "inplace", "limit", "downcast"],
-            'need_param': [0],
-            'default_param_numeric': ['none'],
-            'default_param_str': ['none'],
-        },
         "SimpleImputer": {
-            "index": 3,
+            "index": 1,
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Imputer',
@@ -95,19 +73,8 @@ config["operators1"] = {
             'default_param_numeric': ['np.nan','most_frequent'],
             'default_param_str': ['np.nan','most_frequent'],
         },
-        "Imputer": {
-            "index": -1,
-            "call_type": 3,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Imputer',
-            "physic_operations": ["filling_by_stratage"],
-            "params": ["missing_values", "strategy", "axis", "verbose", "copy"],
-            'need_param': [0,1,2],
-            'default_param_numeric': ['np.nan','most_frequent'],
-            'default_param_str': ['np.nan','most_frequent'],
-        },
         "dropna": {
-            "index": 4,
+            "index": 2,
             "call_type": 0,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Imputer',
@@ -117,30 +84,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "numastype": {
-            "index": 5,
-            "call_type": 0,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'TypeConversion',
-            "physic_operations": ["type_conversion"],
-            "params": ["dtype", "copy", "errors"],
-            'need_param': [0], #这个不用ast分析，简单判断等号，catagory
-            'default_param_numeric': ['str'],
-            'default_param_str': ['int'],
-        },
-        "strastype": {
-            "index": 6,
-            "call_type": 0,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'TypeConversion',
-            "physic_operations": ["type_conversion"],
-            "params": ["dtype", "copy", "errors"],
-            'need_param': [0], #这个不用ast分析，简单判断等号，catagory
-            'default_param_numeric': ['int'],
-            'default_param_str': ['int'],
-        },
         "to_numeric": {
-            "index": 7,
+            "index": 3,
             "call_type": 2,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'TypeConversion',
@@ -150,30 +95,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "OneHotEncoder": {
-            "index": 8,
-            "call_type": 3,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'OnehotEncoding',
-            "physic_operations": ["feature_encoding"],
-            "params": ["categories", "drop", "sparse", "dtype", "handle_unknown"],
-            'need_param': [],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "get_dummies": {
-            "index": 9,
-            "call_type": 2,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'OnehotEncoding',
-            "physic_operations": ["label_encoding"],
-            "params": ["data", "prefix", "prefix_sep", "dummy_na", "columns", "sparse"],
-            'need_param': [],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
         "LabelEncoder": {
-            "index": 10,
+            "index": 4,
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'OnehotEncoding',
@@ -183,19 +106,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "LabelBinarizer": {
-            "index": -1,
-            "call_type": 3,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'OnehotEncoding',
-            "physic_operations": ["label_encoding"],
-            "params": ["neg_label", "pos_label", "sparse_output"],
-            'need_param': [],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
         "StandardScaler": {
-            "index": 11,
+            "index": 5,
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Scale',
@@ -205,39 +117,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "MinMaxScaler": {
-            "index": 12,
-            "call_type": 3,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Scale',
-            "physic_operations": ["Scaler"],
-            "params": ["feature_range", "copy"],
-            'need_param': [0],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "RobustScaler": {
-            "index": 13,
-            "call_type": 3,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Scale',
-            "physic_operations": ["Scaler"],
-            "params": ["with_centering", "with_scaling", "quantile_range", "copy"],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "clip": {
-            "index": 14,
-            "call_type": 0,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-            "logic_operations": 'Scale',
-            "physic_operations": ["clip"],
-            "params": ["a", "a_min", "a_max", "out"],
-            'default_param_numeric': [0, 20],
-            'default_param_str': [],
-        },
         "Normalizer": {
-            "index": 15,
+            "index": 6,
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Normalization',
@@ -246,18 +127,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "l2_normalize":{
-            "index": -1,
-            "call_type": 4,
-        # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'Normalization',
-            "physic_operations": ["normalization"],
-            "params": ["x", "axis", "epsilon", "name", "dim"],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
         "PCA": {
-            "index": 16,
+            "index": 7,
             "call_type": 3,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, fit = 4;
             "logic_operations": 'DimensionReduction',
@@ -267,18 +138,8 @@ config["operators1"] = {
             'default_param_str': [2],
         },
         "drop": {
-            "index": 17,
+            "index": 8,
             "call_type": 0,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, fit = 4;
-            "logic_operations": 'DimensionReduction',
-            "physic_operations": ["drop_column"],
-            "params": ["labels", "axis", "index", "columns", "level", "inplace", "errors"],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "iloc": {
-            "index": -1,
-            "call_type": 5,
             # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, fit = 4;
             "logic_operations": 'DimensionReduction',
             "physic_operations": ["drop_column"],
@@ -287,7 +148,7 @@ config["operators1"] = {
             'default_param_str': [],
         },
         "drop_duplicates":{
-            "index": 18,
+            "index": 9,
             "call_type": 0,
         # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
             "logic_operations": 'Unique',
@@ -296,18 +157,8 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        # "unique":{
-        #     "index": -1,
-        #     "call_type": 2,
-        # # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3;
-        #     "logic_operations": 'Unique',
-        #     "physic_operations": ["unique"],
-        #     "params": ["values"],
-        #     'default_param_numeric': [],
-        #     'default_param_str': [],
-        # },
         "boxcox": {
-            "index": -1,
+            "index": 10,
             "call_type": 4,
             # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
             "logic_operations": 'Smooth',
@@ -316,48 +167,18 @@ config["operators1"] = {
             'default_param_numeric': [],
             'default_param_str': [],
         },
-        "boxcox1p": {
-            "index": 19,
-            "call_type": 4,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'Smooth',
-            "physic_operations": ["skew_and_kurt"],
-            "params": ["x", "lmbda"],
-            'default_param_numeric': [0.15],
-            'default_param_str': [0.15],
-        },
         "log": {
-            "index": -1,
+            "index": 11,
             "call_type": 4,
             # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
             "logic_operations": 'Smooth',
             "physic_operations": ["skew"],
-            "params": ["x", "out", "where"],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "log1p": {
-            "index": 20,
-            "call_type": 4,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'Smooth',
-            "physic_operations": ["skew"],
-            "params": ["x", "out", "where"],
-            'default_param_numeric': [],
-            'default_param_str': [],
-        },
-        "expm1": {
-            "index": -1,
-            "call_type": 4,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'Smooth',
-            "physic_operations": ["inverse_skew"],
             "params": ["x", "out", "where"],
             'default_param_numeric': [],
             'default_param_str': [],
         },
         "cut": {
-            "index": 21,
+            "index": 12,
             "call_type": 2,
             # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
             "logic_operations": 'Cut',
@@ -365,26 +186,6 @@ config["operators1"] = {
             "params": ["x", "bins", "right", "labels", "retbins", "precision", "include_lowest", "duplicates"],
             'default_param_numeric': [5],
             'default_param_str': [5],
-        },
-        "qcut": {
-            "index": -1,
-            "call_type": 2,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'Cut',
-            "physic_operations": ["cut"],
-            "params": ["x", "q","labels", "retbins", "precision", "duplicates"],
-            'default_param_numeric': [4],
-            'default_param_str': [4],
-        },
-        "map": {
-            "index": -1,
-            "call_type": 0,
-            # data.operator() : 0, operator(data, ...) : 1, pd.operator(data, ...) : 2, estimiter = operator() : 3, xxx.operator(data, ...): 4;
-            "logic_operations": 'ValueTransform',
-            "physic_operations": ["value_transform"],
-            "params": ["arg", "na_action"],
-            'default_param_numeric': [],
-            'default_param_str': [],
         },
     }
 }
@@ -696,7 +497,6 @@ config["operators"] = {
 }
 config["dtype"] = {
     "dtype":{
-        'interval[float64]':4,
         'uint8':1,
         'uint16': 1,
         'int64': 1,
@@ -1093,8 +893,8 @@ config["server"] = {
 config["train"] = {
     "train":{
         "nepisode": 1000,
-        "obs_dim": 1942,
-        "learning_rate": 0.0001,
+        "obs_dim": 1962,
+        "learning_rate": 0.05,
         "gamma": 0.99,
         "column_num": 101,
         'dense_dim': 100,

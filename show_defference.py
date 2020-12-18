@@ -8,7 +8,6 @@ def show_diff(series1, series2):
             if series1[i] != series2[i]:
                 print(series1[i], series2[i])
 
-
 if __name__ == '__main__':
     series1 = pd.read_csv('../strcol/e-commerce-simple-eda/Division Name/pair/2.csv')
 
